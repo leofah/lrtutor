@@ -8,13 +8,28 @@
   </script>
   <script type="text/javascript" src="mxGraph/src/js/mxClient.js"></script>
   <script type="text/javascript" src="index.js"></script>
+  <script type="text/javascript" src="connectionHandler.js"></script>
 </head>
 <body onload="main(document.getElementById('mxCanvas'))">
 <div>
-  <button id="zoomIn" onclick="zoomIn()">+</button>
-  <button id="resetZoom" onclick="resetZoom()">reset</button>
-  <button id="zoomOut" onclick="zoomOut()">-</button>
+  <ul>
+    <li>To create ➜ or • in a state, insert \-> oder \. </li>
+    <li>final and start state not yet set</li>
+    <li>edges are added as follows:
+      <ol>
+        <li>hover über einen state</li>
+        <li>Mouse down on the label for the Edge</li>
+        <li>Drag Mouse to target, if there is no state, a new one is created</li>
+      </ol>
+    </li>
+
+  </ul>
 </div>
+<!--<div>-->
+<!--  <button id="zoomIn" onclick="zoomIn()">+</button>-->
+<!--  <button id="resetZoom" onclick="resetZoom()">reset</button>-->
+<!--  <button id="zoomOut" onclick="zoomOut()">-</button>-->
+<!--</div>-->
 <div id="mxCanvas">
 <!--     style="position:absolute;overflow:auto;top:36px;bottom:0px;left:0px;right:0px;border:gray 1px solid;">-->
 </div>

@@ -1,5 +1,10 @@
 let graph = null;
 
+const STYLE_STATE = 'state';
+const STYLE_LR_ITEM = 'lritem';
+const STYLE_HOVER = 'hover';
+const STYLE_HOVER_ITEM = 'hitem';
+
 function main(container) {
     //checks if browser is supported
     if (!mxClient.isBrowserSupported()) {
@@ -22,10 +27,13 @@ function initGraph(container) {
     graph.setAllowDanglingEdges(false);
     graph.setDisconnectOnMove(false);
     // graph.setConnectable(true);
+    // graph.setAllowLoops(true);
     graph.setEdgeLabelsMovable(false);
     graph.setAutoSizeCells(true); //TODO autosize
     graph.setCellsResizable(false);
     graph.setEnterStopsCellEditing(true);
+
+    graph.addMouseListener(new connectionHandler(graph))
     return graph;
 }
 
@@ -33,8 +41,8 @@ function setStylsheet(graph) {
     let stylesheet = graph.getStylesheet();
     let state_style = stylesheet.createDefaultVertexStyle();
     let lritem_style = stylesheet.createDefaultVertexStyle();
-    stylesheet.putCellStyle('state', state_style);
-    stylesheet.putCellStyle('lritem', lritem_style);
+    stylesheet.putCellStyle(STYLE_STATE, state_style);
+    stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
 
     //state
     state_style[mxConstants.STYLE_EDITABLE] = 0;
@@ -42,6 +50,23 @@ function setStylsheet(graph) {
 
     //lritem
     lritem_style[mxConstants.STYLE_MOVABLE] = 0;
+
+    //hover
+    let hover_style = stylesheet.createDefaultVertexStyle();
+    let hitem_style = stylesheet.createDefaultVertexStyle();
+    stylesheet.putCellStyle(STYLE_HOVER, hover_style);
+    stylesheet.putCellStyle(STYLE_HOVER_ITEM, hitem_style);
+    //backgroun
+    hover_style[mxConstants.STYLE_MOVABLE] = 0;
+    hover_style[mxConstants.STYLE_FILLCOLOR] = '#e9e9e9';
+    hover_style[mxConstants.STYLE_ROUNDED] = 1;
+    hover_style[mxConstants.STYLE_EDITABLE] = 0;
+    //item
+    hitem_style[mxConstants.STYLE_MOVABLE] = 0;
+    hitem_style[mxConstants.STYLE_FILLCOLOR] = 'inherit';
+    hitem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
+    hitem_style[mxConstants.STYLE_EDITABLE] = 0;
+
 }
 
 
@@ -51,8 +76,8 @@ function addListeners(graph) {
     let cur_edit_cell = null;
     graph.addListener(null, (_, evt) => {
         //print every event
-        if (evt.name !== "fireMouseEvent")
-            console.log(evt);
+        // if (evt.name !== "fireMouseEvent")
+        //     console.log(evt);
     });
     graph.addListener(mxEvent.EDITING_STARTED, (sender, evt) => {
         cur_edit_cell = evt.getProperty('cell');
@@ -60,27 +85,12 @@ function addListeners(graph) {
     graph.addListener(mxEvent.EDITING_STOPPED, (sender, evt) => {
         let cell = cur_edit_cell;
         cur_edit_cell = null;
-        if (cell && cell.getStyle() === 'lritem') {
+        if (cell && cell.getStyle() === STYLE_LR_ITEM) {
             listenEditStopLRItem(graph, cell, evt);
             evt.consume();
         }
     });
 
-    graph.addListener(mxEvent.CLICK, listenClick);
-}
-
-function listenClick(sender, evt) {
-    const cell = evt.getProperty('cell');
-    const mainEvent = evt.getProperty('event');
-    if (!cell) {
-        // click on canvas
-        if (!evt.consumed) {
-            // click has not be used for another action
-            // TODO: filter unselect clicks and done editing clicks
-            addState(graph, mainEvent.clientX , mainEvent.clientY );
-            console.log('Cell added');
-        }
-    }
 }
 
 function listenEditStopLRItem(graph, cell, evt) {
@@ -118,8 +128,9 @@ function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
     try {
-        const startState = graph.insertVertex(graph.getDefaultParent(), null, "", 200, 200, 80, 30, 'state');
-        const lrItem = graph.insertVertex(startState, null, "S' ➜ •S", 0, 20, 40, 20, 'lritem');
+        const startState = graph.insertVertex(graph.getDefaultParent(), null, "", 200, 200, 80, 30, STYLE_STATE);
+        const lrItem = graph.insertVertex(startState, null, "S' ➜ •S", 0, 20, 40, 20, STYLE_LR_ITEM);
+        console.log(startState);
         // lrItem.setConnectable(false);
     } finally {
         graph.getModel().endUpdate();
@@ -131,7 +142,7 @@ function addState(graph, locX, loxY) {
     let state;
     graph.getModel().beginUpdate();
     try {
-        state = graph.insertVertex(graph.getDefaultParent(), null, "", locX, loxY, 80, 30, 'state');
+        state = graph.insertVertex(graph.getDefaultParent(), null, "", locX, loxY, 80, 30, STYLE_STATE);
     } finally {
         graph.getModel().endUpdate();
     }
@@ -147,7 +158,7 @@ function editState(graph, state, index = -1) {
     try {
         item = state.getChildAt(index);
         if (!item) {
-            item = graph.insertVertex(state, null, "", 0, state.getChildCount() * 20 + 20, 40, 20, 'lritem');
+            item = graph.insertVertex(state, null, "edit here", 0, state.getChildCount() * 20 + 20, 40, 20, STYLE_LR_ITEM);
         }
     } finally {
         graph.getModel().endUpdate();
