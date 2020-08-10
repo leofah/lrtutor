@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MXGraph Test</title>
+  <script type="text/javascript">
+      mxBasePath = 'mxGraph/src';
+  </script>
+  <script type="text/javascript" src="mxGraph/src/js/mxClient.js"></script>
+  <script type="text/javascript" src="index.js"></script>
+</head>
+<body onload="main(document.getElementById('mxCanvas'))">
+<div>
+  <button id="zoomIn" onclick="zoomIn()">+</button>
+  <button id="resetZoom" onclick="resetZoom()">reset</button>
+  <button id="zoomOut" onclick="zoomOut()">-</button>
+</div>
+<div id="mxCanvas">
+<!--     style="position:absolute;overflow:auto;top:36px;bottom:0px;left:0px;right:0px;border:gray 1px solid;">-->
+</div>
+</body>
+</html>
