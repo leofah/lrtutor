@@ -187,49 +187,54 @@ function resetZoom() {
 }
 
 // ------------ save and load graph -----------
-function serializeGraph() {
-    if (graph) {
-        const enc = new mxCodec(mxUtils.createXmlDocument());
-        const node = enc.encode(graph.getModel());
-        const xml = mxUtils.getXml(node);
-        return JSON.stringify({
-            'version': GRAPH_VERSION,
-            'graph': xml,
-        });
-    }
+function serializeGraph(graph) {
+    /**
+     * creates an XML representation of the graph, with mxCodec ans mxUtils.getXml
+     * a version attribute is added for compatibility reasons
+     */
+    const enc = new mxCodec(mxUtils.createXmlDocument());
+    const graph_xml = enc.encode(graph.getModel());
+    const root_xml = document.implementation.createDocument(null, "LRTutor", null);
+    const root_elem = root_xml.getElementsByTagName('LRTutor')[0];
+    root_elem.setAttribute('version', GRAPH_VERSION);
+    const graph_node = root_xml.createElement('Graph');
+    graph_node.appendChild(graph_xml);
+    root_elem.appendChild(graph_node);
+
+    return mxUtils.getPrettyXml(root_xml);
 }
 
 function deSerializeGraph(serial) {
-    let json;
+    /**
+     * deserializes a text/xml representation of the graph and loads it.
+     * Version number is checked
+     */
     try {
-        json = JSON.parse(serial);
-    } catch (e) {
-        return "invalid file format";
-    }
-    if (!'version' in json || !'graph' in json) {
-        return "invalid file format";
-    }
-    if (json['version'] !== GRAPH_VERSION) {
-        return "invalid Graph Version: '" + json['version'] + "', needed version: '" + GRAPH_VERSION + "'";
-    }
-    try {
-        const xml = json['graph'];
-        const doc = mxUtils.parseXml(xml);
-        const codec = new mxCodec(doc);
-        codec.decode(doc.documentElement, graph.getModel());
-    } catch (e) {
-        return "invalid graph encoding";
-    }
+        const doc = mxUtils.parseXml(serial);
+        const graph_node = doc.getElementsByTagName('Graph')[0];
+        const vers = doc.documentElement.attributes['version'].value;
+        if (vers !== GRAPH_VERSION) {
+            return "Invalid File Version: '" + vers + "', need version: '" + GRAPH_VERSION + "'";
+        }
 
+        const graph_text = graph_node.innerHTML;
+        const graph_xml = mxUtils.parseXml(graph_text);
+        const codec = new mxCodec(graph_xml);
+        codec.decode(graph_xml.documentElement, graph.getModel());
+    } catch (e) {
+        return "Invalid File Format: " + e;
+    }
 }
 
 function saveGraph() {
-    saveFile('graph.xml', serializeGraph(), 'text/xml');
+    saveFile('graph.xml', serializeGraph(graph), 'text/xml');
 }
 
 function loadGraph() {
     loadFile(serial => {
-        console.log(deSerializeGraph(serial));
+        const error = deSerializeGraph(serial);
+        if (error)
+            console.log(error);
     });
 }
 
