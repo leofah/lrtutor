@@ -1,9 +1,11 @@
-let graph = null;
+const GRAPH_VERSION = '0.1';
 
 const STYLE_STATE = 'state';
 const STYLE_LR_ITEM = 'lritem';
 const STYLE_HOVER = 'hover';
 const STYLE_HOVER_ITEM = 'hitem';
+
+let graph = null;
 
 function main(container) {
     //checks if browser is supported
@@ -90,7 +92,6 @@ function addListeners(graph) {
             evt.consume();
         }
     });
-
 }
 
 function listenEditStopLRItem(graph, cell, evt) {
@@ -130,7 +131,6 @@ function addStartState(graph) {
     try {
         const startState = graph.insertVertex(graph.getDefaultParent(), null, "", 200, 200, 80, 30, STYLE_STATE);
         const lrItem = graph.insertVertex(startState, null, "S' ➜ •S", 0, 20, 40, 20, STYLE_LR_ITEM);
-        console.log(startState);
         // lrItem.setConnectable(false);
     } finally {
         graph.getModel().endUpdate();
@@ -184,4 +184,93 @@ function resetZoom() {
     if (graph) {
         graph.zoomActual();
     }
+}
+
+// ------------ save and load graph -----------
+function serializeGraph() {
+    if (graph) {
+        const enc = new mxCodec(mxUtils.createXmlDocument());
+        const node = enc.encode(graph.getModel());
+        const xml = mxUtils.getXml(node);
+        return JSON.stringify({
+            'version': GRAPH_VERSION,
+            'graph': xml,
+        });
+    }
+}
+
+function deSerializeGraph(serial) {
+    let json;
+    try {
+        json = JSON.parse(serial);
+    } catch (e) {
+        return "invalid file format";
+    }
+    if (!'version' in json || !'graph' in json) {
+        return "invalid file format";
+    }
+    if (json['version'] !== GRAPH_VERSION) {
+        return "invalid Graph Version: '" + json['version'] + "', needed version: '" + GRAPH_VERSION + "'";
+    }
+    try {
+        const xml = json['graph'];
+        const doc = mxUtils.parseXml(xml);
+        const codec = new mxCodec(doc);
+        codec.decode(doc.documentElement, graph.getModel());
+    } catch (e) {
+        return "invalid graph encoding";
+    }
+
+}
+
+function saveGraph() {
+    saveFile('graph.xml', serializeGraph(), 'text/xml');
+}
+
+function loadGraph() {
+    loadFile(serial => {
+        console.log(deSerializeGraph(serial));
+    });
+}
+
+function saveFile(filename, data, type) {
+    /**
+     * Asks the user to save the data as a file to the given filename
+     */
+    const blob = new Blob([data], {type: type});
+    if (window.navigator.msSaveOrOpenBlob) {
+        // handle IE
+        window.navigator.msSaveBlob(blob, filename);
+    } else {
+        const elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = filename;
+        document.body.appendChild(elem);
+        elem.click();
+        document.body.removeChild(elem);
+        window.URL.revokeObjectURL(elem.href);
+    }
+}
+
+function loadFile(func) {
+    /**
+     * asks user to input a file. The content of the file is passed to the argument func(content)
+     */
+    const elem = window.document.createElement('input');
+    elem.type = 'file';
+    elem.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const content = e.target.result;
+            func(content);
+        };
+        reader.readAsText(file);
+    });
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
 }
