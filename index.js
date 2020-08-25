@@ -5,6 +5,12 @@ const STYLE_LR_ITEM = 'lritem';
 const STYLE_HOVER = 'hover';
 const STYLE_HOVER_ITEM = 'hitem';
 
+//include files (for development)
+document.write('<script src="connectionHandler.js"></script>')
+document.write('<script src="editHandler.js"></script>')
+document.write('<script src="grammar.js"></script>')
+
+
 let graph = null;
 
 function main(container) {
@@ -19,23 +25,20 @@ function main(container) {
     addStartState(graph);
 }
 
-function check_evt(sender, evt) {
-    console.log("event")
-}
-
 function initGraph(container) {
     const graph = new mxGraph(container, new mxGraphModel());
     // graph.setEnabled(false);
     graph.setAllowDanglingEdges(false);
     graph.setDisconnectOnMove(false);
-    // graph.setConnectable(true);
-    // graph.setAllowLoops(true);
+    // graph.setConnectable(true); //not needed if custom connectionHandler implemented and activated
+    // graph.setAllowLoops(true); //works with the built in mxGraph connection Handler
     graph.setEdgeLabelsMovable(false);
     graph.setAutoSizeCells(true); //TODO autosize
     graph.setCellsResizable(false);
-    graph.setEnterStopsCellEditing(true);
 
     graph.addMouseListener(new connectionHandler(graph))
+    graph.editHandler = new editHandler(graph);
+    graph.grammar = new Grammar();
     return graph;
 }
 
@@ -74,63 +77,23 @@ function setStylsheet(graph) {
 
 // ------------- Listener ---------------
 function addListeners(graph) {
-    //listen editing start stop
     let cur_edit_cell = null;
     graph.addListener(null, (_, evt) => {
         //print every event
         // if (evt.name !== "fireMouseEvent")
         //     console.log(evt);
     });
-    graph.addListener(mxEvent.EDITING_STARTED, (sender, evt) => {
-        cur_edit_cell = evt.getProperty('cell');
-    });
-    graph.addListener(mxEvent.EDITING_STOPPED, (sender, evt) => {
-        let cell = cur_edit_cell;
-        cur_edit_cell = null;
-        if (cell && cell.getStyle() === STYLE_LR_ITEM) {
-            listenEditStopLRItem(graph, cell, evt);
-            evt.consume();
-        }
-    });
-}
 
-function listenEditStopLRItem(graph, cell, evt) {
-    // lr items escaping and creation
-    const value = cell.getValue();
-    const newValue = escapeLRItem(value);
-    let edit_cell = null;
-    if (newValue === "") {
-        //remove empty lr item
-        graph.getModel().beginUpdate();
-        try {
-            graph.removeCells([cell]);
-        } finally {
-            graph.getModel().endUpdate();
-        }
-    } else {
-        graph.getModel().setValue(cell, newValue);
-        if (!evt.getProperty('cancel')) {
-            //start editing the next lr item in the cell
-            const state = cell.getParent();
-            const index = state.children.indexOf(cell);
-            editState(graph, state, index + 1);
-        }
-    }
 }
 
 // ---------------- stuff ------------------------
-function escapeLRItem(text) {
-    //pretty characters for LR Items
-    text = text.replace("\\.", "•").replace("\\->", "➜");
-    return text;
-}
 
 function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
     try {
         const startState = graph.insertVertex(graph.getDefaultParent(), null, "", 200, 200, 80, 30, STYLE_STATE);
-        const lrItem = graph.insertVertex(startState, null, "S' ➜ •S", 0, 20, 40, 20, STYLE_LR_ITEM);
+        const lrItem = graph.insertVertex(startState, null, "S' ➜ •E", 0, 20, 40, 20, STYLE_LR_ITEM);
         // lrItem.setConnectable(false);
     } finally {
         graph.getModel().endUpdate();
@@ -146,25 +109,11 @@ function addState(graph, locX, loxY) {
     } finally {
         graph.getModel().endUpdate();
     }
-    editState(graph, state);
+    graph.editHandler.editState(graph, state);
     return state;
 }
 
-function editState(graph, state, index = -1) {
-    // edits lr Item on index of state and start editing
-    // if index does not exist, new lritem is added
-    let item;
-    graph.getModel().beginUpdate();
-    try {
-        item = state.getChildAt(index);
-        if (!item) {
-            item = graph.insertVertex(state, null, "edit here", 0, state.getChildCount() * 20 + 20, 40, 20, STYLE_LR_ITEM);
-        }
-    } finally {
-        graph.getModel().endUpdate();
-    }
-    graph.startEditingAtCell(item);
-}
+
 
 
 // ------------ Zooming---------------
@@ -192,7 +141,7 @@ function serializeGraph(graph) {
      * creates an XML representation of the graph, with mxCodec ans mxUtils.getXml
      * a version attribute is added for compatibility reasons
      */
-    const enc = new mxCodec(mxUtils.createXmlDocument());
+    const enc = new mxCodec();
     const graph_xml = enc.encode(graph.getModel());
     const root_xml = document.implementation.createDocument(null, "LRTutor", null);
     const root_elem = root_xml.getElementsByTagName('LRTutor')[0];
@@ -212,15 +161,14 @@ function deSerializeGraph(serial) {
     try {
         const doc = mxUtils.parseXml(serial);
         const graph_node = doc.getElementsByTagName('Graph')[0];
-        const vers = doc.documentElement.attributes['version'].value;
+        const vers = doc.documentElement.getAttribute('version');
         if (vers !== GRAPH_VERSION) {
             return "Invalid File Version: '" + vers + "', need version: '" + GRAPH_VERSION + "'";
         }
 
-        const graph_text = graph_node.innerHTML;
-        const graph_xml = mxUtils.parseXml(graph_text);
-        const codec = new mxCodec(graph_xml);
-        codec.decode(graph_xml.documentElement, graph.getModel());
+        const graph_doc = mxUtils.parseXml(graph_node.innerHTML);
+        const codec = new mxCodec(graph_doc);
+        codec.decode(graph_node.firstElementChild, graph.getModel());
     } catch (e) {
         return "Invalid File Format: " + e;
     }
