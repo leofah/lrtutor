@@ -1,39 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>MXGraph Test</title>
-    <script type="text/javascript">
-        mxBasePath = 'mxGraph/src';
-    </script>
-    <script type="text/javascript" src="mxGraph/src/js/mxClient.js"></script>
+  <meta charset="UTF-8">
+  <title>MXGraph Test</title>
+  <script type="text/javascript">
+      mxBasePath = 'mxGraph/src';
+  </script>
+  <script type="text/javascript" src="mxGraph/src/js/mxClient.js"></script>
 </head>
 <body onload="main(document.getElementById('mxCanvas'))">
 <div>
-    <ul>
-        <li>To create ➜ or • in a state, insert \-> oder \.</li>
-        <li>final and start state not yet set</li>
-        <li>edges are added as follows:
-            <ol>
-                <li>hover über einen state</li>
-                <li>Mouse down on the label for the Edge</li>
-                <li>Drag Mouse to target, if there is no state, a new one is created</li>
-            </ol>
-        </li>
+  <ul>
+    <li>To create ➜ or • in a state, insert '->' oder '.'</li>
+    <li>final and start state not yet set</li>
+    <li>edges are added as follows:
+      <ol>
+        <li>hover über einen state</li>
+        <li>Mouse down on the label for the Edge</li>
+        <li>Drag Mouse to target, if there is no state, a new one is created</li>
+      </ol>
+    </li>
 
-    </ul>
+  </ul>
 </div>
 <div>
-    <button id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
-    <button id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
+  <button id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
+  <button id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
 </div>
 <div>
   <button id="zoomIn" onclick="zoomIn()">+</button>
   <button id="resetZoom" onclick="resetZoom()">reset</button>
   <button id="zoomOut" onclick="zoomOut()">-</button>
 </div>
+<div>
+  <button id="delete" onclick="deletedStates()">Delete States</button>
+  <button id="toggleFinal" onclick="toggleFinalStates()">Toggle Final States</button>
+</div>
 <div id="mxCanvas">
-    <!--     style="position:absolute;overflow:auto;top:36px;bottom:0px;left:0px;right:0px;border:gray 1px solid;">-->
+  <!--     style="position:absolute;overflow:auto;top:36px;bottom:0px;left:0px;right:0px;border:gray 1px solid;">-->
 </div>
 </body>
 <script type="text/javascript" src="index.js"></script>

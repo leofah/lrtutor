@@ -12,9 +12,9 @@ class Grammar {
         this.lr = 0; //lr(.) value, either 0 or 1 (higher exists, but is not needed)
         this.terminals = ['(', ')', '+', '*', 'int'];
         this.nonTerminals = ['E', 'T', 'F'];
-        this.productions = ["S′➜E","E➜E+T", "E➜T", "T➜T*F","T➜F", "F➜(E)", "F➜int"];
+        this.productions = ["S'➜E","E➜E+T", "E➜T", "T➜T*F","T➜F", "F➜(E)", "F➜int"];
         this.startProduction = this.productions[0];
-        this.plain = "S′➜E\n" +
+        this.plain = "S'➜E\n" +
             "E➜E + T |T \n" +
             "T➜T * F |F \n" +
             "F➜( E ) |int \n";

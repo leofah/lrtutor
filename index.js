@@ -1,17 +1,40 @@
-const GRAPH_VERSION = '0.1';
+const GRAPH_VERSION = '0.2';
 
 const STYLE_STATE = 'state';
+const STYLE_FINAL_STATE = 'final'
+const STYLE_EDGE = 'edge';
 const STYLE_LR_ITEM = 'lritem';
 const STYLE_HOVER = 'hover';
 const STYLE_HOVER_ITEM = 'hitem';
+
+const ATTR_START = 'start';
+const ATTR_FINAL = 'final';
 
 //include files (for development)
 document.write('<script src="connectionHandler.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
 
+//add protoype function for cell to get the type (state, LR-Item) of the cell
+mxCell.prototype.getType = function () {
+    const style = this.getStyle()
+    if (!style) {
+        return ''
+    } else if (style.includes(STYLE_LR_ITEM)) {
+        return STYLE_LR_ITEM;
+    } else if (style.includes(STYLE_FINAL_STATE) || style.includes(STYLE_STATE)) {
+        return STYLE_STATE;
+    } else if (style.includes(STYLE_EDGE)) {
+        return STYLE_EDGE;
+    } else if (style.includes(STYLE_HOVER)) {
+        return STYLE_HOVER;
+    } else if (style.includes(STYLE_HOVER_ITEM)) {
+        return STYLE_HOVER_ITEM;
+    }
+    return '';
+}
 
-let graph = null;
+let graph = new mxGraph();
 
 function main(container) {
     //checks if browser is supported
@@ -36,9 +59,22 @@ function initGraph(container) {
     graph.setAutoSizeCells(true); //TODO autosize
     graph.setCellsResizable(false);
 
-    graph.addMouseListener(new connectionHandler(graph))
+    graph.ownConnectionHandler = new connectionHandler(graph)
+    graph.addMouseListener(graph.ownConnectionHandler);
     graph.editHandler = new editHandler(graph);
     graph.grammar = new Grammar();
+
+    //values of states are XML Node, which need to have a name, but not displayed
+    // graph.convertValueToString = function (cell) {
+    //     const value = cell.value
+    //     if (mxUtils.isNode(value)) {
+    //         return '';
+    //     } else if (typeof (value.toString) == 'function') {
+    //         return value.toString();
+    //     }
+    //     return '';
+    // }
+
     return graph;
 }
 
@@ -46,15 +82,20 @@ function setStylsheet(graph) {
     let stylesheet = graph.getStylesheet();
     let state_style = stylesheet.createDefaultVertexStyle();
     let lritem_style = stylesheet.createDefaultVertexStyle();
-    stylesheet.putCellStyle(STYLE_STATE, state_style);
-    stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
+    let edge_style = stylesheet.createDefaultEdgeStyle();
 
     //state
     state_style[mxConstants.STYLE_EDITABLE] = 0;
     state_style[mxConstants.STYLE_ROUNDED] = 1;
 
+    //final_state
+    let final_state_style = Object.assign({}, state_style); //copy state_style
+    final_state_style[mxConstants.STYLE_STROKEWIDTH] = 5;
+
     //lritem
     lritem_style[mxConstants.STYLE_MOVABLE] = 0;
+
+    //edge
 
     //hover
     let hover_style = stylesheet.createDefaultVertexStyle();
@@ -72,12 +113,15 @@ function setStylsheet(graph) {
     hitem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
     hitem_style[mxConstants.STYLE_EDITABLE] = 0;
 
+    stylesheet.putCellStyle(STYLE_STATE, state_style);
+    stylesheet.putCellStyle(STYLE_FINAL_STATE, final_state_style)
+    stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
+    stylesheet.putCellStyle(STYLE_EDGE, edge_style);
 }
 
 
 // ------------- Listener ---------------
 function addListeners(graph) {
-    let cur_edit_cell = null;
     graph.addListener(null, (_, evt) => {
         //print every event
         // if (evt.name !== "fireMouseEvent")
@@ -92,9 +136,12 @@ function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
     try {
-        const startState = graph.insertVertex(graph.getDefaultParent(), null, "", 200, 200, 80, 30, STYLE_STATE);
-        const lrItem = graph.insertVertex(startState, null, "S' ➜ •E", 0, 20, 40, 20, STYLE_LR_ITEM);
-        // lrItem.setConnectable(false);
+        // const node = mxUtils.createXmlDocument().createElement('State');
+        const node = null;
+        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, 200, 200, 80, 30, STYLE_STATE);
+        graph.startState = startState;
+        graph.insertVertex(startState, null, "S' ➜ •E", 0, 20, 40, 20, STYLE_LR_ITEM);
+
     } finally {
         graph.getModel().endUpdate();
     }
@@ -105,7 +152,10 @@ function addState(graph, locX, loxY) {
     let state;
     graph.getModel().beginUpdate();
     try {
-        state = graph.insertVertex(graph.getDefaultParent(), null, "", locX, loxY, 80, 30, STYLE_STATE);
+        // xml node as value, to store attributes for the state
+        // const node = mxUtils.createXmlDocument().createElement('State');
+        const node = null
+        state = graph.insertVertex(graph.getDefaultParent(), null, node, locX, loxY, 80, 30, STYLE_STATE);
     } finally {
         graph.getModel().endUpdate();
     }
@@ -113,7 +163,51 @@ function addState(graph, locX, loxY) {
     return state;
 }
 
+/**
+ * toggles the final state attribute on the selected States
+ */
+function toggleFinalStates() {
+    const selection = graph.getSelectionModel().cells;
+    for (const i in selection) {
+        const cell = selection[i];
+        if (cell.getType() === STYLE_STATE) {
+            if (cell.getStyle() === STYLE_FINAL_STATE) {
+                graph.model.setStyle(cell, STYLE_STATE)
+            } else {
+                graph.model.setStyle(cell, STYLE_FINAL_STATE)
+            }
+            console.log(cell.getStyle());
+        }
+    }
+}
 
+/**
+ * deletes the selected states and edges
+ * connected edges are deleted as well
+ */
+function deletedStates() {
+    const selection = graph.getSelectionModel().cells;
+    graph.getModel().beginUpdate();
+    try {
+        for (const i in selection) {
+            const cell = selection[i];
+            if (cell.getType() === STYLE_STATE || cell.getType() === STYLE_EDGE) {
+                if (graph.startState !== cell) { //start state cannot be deleted (now)
+                    graph.getModel().remove(cell);
+                }
+            }
+        }
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+
+/**
+ * sets the selected state to the start State if only one state is selected
+ */
+function setStartState() {
+    //not important by now
+}
 
 
 // ------------ Zooming---------------
@@ -136,11 +230,17 @@ function resetZoom() {
 }
 
 // ------------ save and load graph -----------
+/**
+ * creates an XML representation of the graph, with mxCodec ans mxUtils.getXml
+ * a version attribute is added for compatibility reasons
+ */
 function serializeGraph(graph) {
-    /**
-     * creates an XML representation of the graph, with mxCodec ans mxUtils.getXml
-     * a version attribute is added for compatibility reasons
-     */
+
+    //remove temporary shapes added to the graph, they should not be saved
+    graph.ownConnectionHandler.removePreview();
+    graph.ownConnectionHandler.removeHoverCell();
+
+    //use mxCodec to create an XML representations of the graph
     const enc = new mxCodec();
     const graph_xml = enc.encode(graph.getModel());
     const root_xml = document.implementation.createDocument(null, "LRTutor", null);
@@ -150,6 +250,8 @@ function serializeGraph(graph) {
     graph_node.appendChild(graph_xml);
     root_elem.appendChild(graph_node);
 
+    //save start state
+    graph_node.setAttribute('start_state', graph.startState.id)
     return mxUtils.getPrettyXml(root_xml);
 }
 
@@ -169,6 +271,11 @@ function deSerializeGraph(serial) {
         const graph_doc = mxUtils.parseXml(graph_node.innerHTML);
         const codec = new mxCodec(graph_doc);
         codec.decode(graph_node.firstElementChild, graph.getModel());
+
+        //set start state
+        const start_id = graph_node.getAttribute('start_state');
+        graph.startState = graph.getModel().cells[start_id];
+
     } catch (e) {
         return "Invalid File Format: " + e;
     }

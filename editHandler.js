@@ -21,7 +21,7 @@ class editHandler {
         this.graph.addListener(mxEvent.EDITING_STOPPED, (sender, evt) => {
             let cell = this.cur_edit_cell;
             this.cur_edit_cell = null;
-            if (cell && cell.getStyle() === STYLE_LR_ITEM) {
+            if (cell && cell.getType() === STYLE_LR_ITEM) {
                 //listen only for stopped on LR items
                 this.listenEditStopLRItem(this.graph, cell, evt);
                 evt.consume();
