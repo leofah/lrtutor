@@ -30,7 +30,6 @@ class editHandler {
     }
 
     listenEditStopLRItem(graph, cell, evt) {
-        console.log(evt);
         // lr items escaping and creation
         const value = cell.getValue();
         const newValue = this.checkLRItem(value);

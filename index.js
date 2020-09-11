@@ -127,7 +127,21 @@ function addListeners(graph) {
         // if (evt.name !== "fireMouseEvent")
         //     console.log(evt);
     });
-
+    graph.addListener(mxEvent.CELLS_MOVED, (_, evt) => {
+        console.log(evt);
+        const cells = evt.getProperty('cells');
+        for (const i in cells) {
+            const cell = cells[i];
+            if (cell === graph.startState) {
+                // move start state startIndicator if start state moved
+                const geo_start = cell.getGeometry();
+                const geo_source = graph.startIndicatorSource.getGeometry().clone()
+                geo_source.x = geo_start.x - 30;
+                geo_source.y = geo_start.y + geo_start.height / 2
+                graph.getModel().setGeometry(graph.startIndicatorSource, geo_source);
+            }
+        }
+    });
 }
 
 // ---------------- stuff ------------------------
@@ -135,13 +149,17 @@ function addListeners(graph) {
 function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
+    const X = 200, Y = 200;
+    const width = 80;
+    const height = 30;
     try {
-        // const node = mxUtils.createXmlDocument().createElement('State');
         const node = null;
-        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, 200, 200, 80, 30, STYLE_STATE);
-        graph.startState = startState;
+        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
+        // Add LR ITem
         graph.insertVertex(startState, null, "S' ➜ •E", 0, 20, 40, 20, STYLE_LR_ITEM);
 
+        // set start state and add startIndicator edge
+        setStartStateIntern(graph, startState);
     } finally {
         graph.getModel().endUpdate();
     }
@@ -163,6 +181,20 @@ function addState(graph, locX, loxY) {
     return state;
 }
 
+function setStartStateIntern(graph, state) {
+    if (state == null)
+        return;
+    const geo = state.getGeometry();
+    const source = graph.insertVertex(graph.getDefaultParent(), null, null,
+        geo.x - 30, geo.y + geo.height / 2, 0, 0);
+    const startIndicator = graph.insertEdge(graph.getDefaultParent(), null, null, source, state);
+    graph.startState = state;
+    graph.getModel().remove(graph.startIndicatorSource);
+    graph.getModel().remove(graph.startIndicatorEdge);
+    graph.startIndicatorSource = source;
+    graph.startIndicatorEdge = startIndicator;
+}
+
 /**
  * toggles the final state attribute on the selected States
  */
@@ -172,11 +204,10 @@ function toggleFinalStates() {
         const cell = selection[i];
         if (cell.getType() === STYLE_STATE) {
             if (cell.getStyle() === STYLE_FINAL_STATE) {
-                graph.model.setStyle(cell, STYLE_STATE)
+                graph.getModel().setStyle(cell, STYLE_STATE)
             } else {
-                graph.model.setStyle(cell, STYLE_FINAL_STATE)
+                graph.getModel().setStyle(cell, STYLE_FINAL_STATE)
             }
-            console.log(cell.getStyle());
         }
     }
 }
@@ -206,7 +237,26 @@ function deletedStates() {
  * sets the selected state to the start State if only one state is selected
  */
 function setStartState() {
-    //not important by now
+    const selection = graph.getSelectionModel().cells;
+    graph.getModel().beginUpdate();
+    try {
+        let newStartState = null;
+        for (const i in selection) {
+            const cell = selection[i];
+            if (cell.getType() === STYLE_STATE) {
+                if (newStartState === null) {
+                    newStartState = cell;
+                } else {
+                    console.log("Only one state can be start State, but multiple states were selected")
+                    newStartState = null;
+                    break;
+                }
+            }
+        }
+        setStartStateIntern(graph, newStartState);
+    } finally {
+        graph.getModel().endUpdate();
+    }
 }
 
 
