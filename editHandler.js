@@ -33,8 +33,8 @@ class editHandler {
         // lr items escaping and creation
         const value = cell.getValue();
         const newValue = this.checkLRItem(value);
-        if (newValue === "error") {
-            this.graph.getModel().setValue(cell, "Error");
+        if (newValue === "edit here") {
+        // this.graph.getModel().setValue(cell, "Error");
             return;
         }
         if (newValue === "") {
@@ -64,7 +64,7 @@ class editHandler {
         try {
             item = state.getChildAt(child_index);
             if (!item) {
-                item = graph.insertVertex(state, null, "edit here", 0, state.getChildCount() * 20 + 20, 40, 20, STYLE_LR_ITEM);
+                item = graph.insertVertex(state, null, "edit here", 5, state.getChildCount() * 20 + 5, 40, 20, STYLE_LR_ITEM);
             }
         } finally {
             graph.getModel().endUpdate();
@@ -80,7 +80,7 @@ class editHandler {
         text = text.replace(".", DOT).replace("->", ARROW);
         //check if correct lritem
         if (!this.graph.grammar.isLRItem(text)) {
-            return "error";
+            // return "error";
         }
         return text;
     }

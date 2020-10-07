@@ -8,22 +8,27 @@
   </script>
   <script type="text/javascript" src="mxGraph/src/js/mxClient.js"></script>
 </head>
-<body onload="main()">
+
+<body onload="main()">A
+
+<noscript>
+  <h1>Please Enable Javascript for this site</h1>
+</noscript>
+
 <div>
   <ul>
     <li>To create ➜ or • in a state, insert '->' oder '.'</li>
-    <li>final and start state not yet set</li>
     <li>edges are added as follows:
       <ol>
-        <li>hover über einen state</li>
+        <li>hover over a state</li>
         <li>Mouse down on the label for the Edge</li>
         <li>Drag Mouse to target, if there is no state, a new one is created</li>
       </ol>
     </li>
-
   </ul>
 </div>
 <div>
+
   <button id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
   <button id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
 </div>

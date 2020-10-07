@@ -56,7 +56,7 @@ class connectionHandler {
             }
             this.graph.getModel().beginUpdate();
             try {
-                // remove edge with same terminal (discrete algorithm)
+                // remove edge with same terminal (deterministic graph)
                 for (const i in this.cell.edges) {
                     let edge = this.cell.getEdgeAt(i);
                     if (edge.getValue() === this.draggingTerminal && edge.getTerminal(true) === this.cell) {
@@ -75,6 +75,7 @@ class connectionHandler {
     }
 
     mouseMove(sender, evt) {
+        // TODO evt.getCell()
         let cell = this.graph.getCellAt(evt.graphX, evt.graphY, null, true, false);
         let parentCell = this.getHighestParent(cell);
         if (this.isDraggingEdge) {
@@ -150,9 +151,9 @@ class connectionHandler {
             layout.isVertexMovable = function () {
                 return true;
             }
-            const terminals = this.graph.grammar.terminals;
-            for (const terminal in terminals) {
-                const term = this.graph.insertVertex(this.hoverCell, null, terminals[terminal], 0, 0, 18, 18, STYLE_HOVER_ITEM)
+            const edgeLabels = this.graph.grammar.terminals.concat(this.graph.grammar.nonTerminals);
+            for (const label in edgeLabels) {
+                const lab = this.graph.insertVertex(this.hoverCell, null, edgeLabels[label], 0, 0, 18, 18, STYLE_HOVER_ITEM)
             }
             layout.execute(this.hoverCell);
         } finally {

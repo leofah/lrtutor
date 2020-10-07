@@ -42,9 +42,12 @@ function main() {
     if (!mxClient.isBrowserSupported()) {
         mxUtils.error('Unsupported Browser', 200, false);
     }
+    // temporary
+    document.getElementById('grammarTextArea').value = "S'➜E\nE➜E + T |T \nT➜T * F |F \nF➜( E ) |int \n"
 }
 
 function initGraph(grammar) {
+    console.log(grammar);
     const g = new mxGraph(document.getElementById('mxCanvas'), new mxGraphModel());
     // graph.setEnabled(false);
     g.setAllowDanglingEdges(false);
@@ -161,7 +164,9 @@ function addStartState(graph) {
         const node = null;
         const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
         // Add LR ITem
-        graph.insertVertex(startState, null, "S' ➜ •E", 5, 5, 40, 20, STYLE_LR_ITEM);
+        const prod = graph.grammar.startProduction;
+        const prodString = prod[0] + ARROW + DOT + prod[1].join(" ");
+        graph.insertVertex(startState, null, prodString, 5, 5, 40, 20, STYLE_LR_ITEM);
 
         // set start state and add startIndicator edge
         setStartStateIntern(graph, startState);
@@ -331,7 +336,7 @@ function deSerializeGraph(serial) {
         const grammar = new Grammar(grammar_node.getAttribute('plain'), grammar_node.getAttribute('lr'));
         changeGrammarDOM(grammar);
         if (!graphActive)
-           initGraph(grammar);
+            initGraph(grammar);
         else
             graph.grammar = grammar;
 
