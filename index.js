@@ -335,6 +335,8 @@ function deSerializeGraph(serial) {
         const grammar_node = doc.getElementsByTagName('Grammar')[0];
         const grammar = new Grammar(grammar_node.getAttribute('plain'), grammar_node.getAttribute('lr'));
         changeGrammarDOM(grammar);
+        if (grammar._errors)
+            return;
         if (!graphActive)
             initGraph(grammar);
         else
@@ -414,6 +416,8 @@ function setGrammar(plainGrammar, lr0) {
     const lr = lr0 ? 0 : 1;
     const grammar = new Grammar(plainGrammar, lr);
     changeGrammarDOM(grammar);
+    if (grammar._errors)
+        return;
     initGraph(grammar);
 }
 
@@ -430,7 +434,15 @@ function changeGrammarDOM(grammar) {
 
     const pre = document.createElement('pre');
     pre.setAttribute('id', 'grammar');
-    pre.appendChild(document.createTextNode(grammar.plain));
+    if (grammar._errors) {
+        const p = document.createElement('p');
+        p.appendChild(document.createTextNode("Error in Grammar Definition:"));
+        nodeGrammar.appendChild(p);
+
+        pre.appendChild(document.createTextNode(grammar._errors.join('\n')));
+    } else {
+        pre.appendChild(document.createTextNode(grammar.plain));
+    }
     nodeGrammar.appendChild(pre);
 
     const node = document.getElementById('div-grammar');

@@ -36,6 +36,9 @@ class Grammar {
         this.plain = this.plainProductions.join('\n');
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
         this.startProduction = this.productions[0];
+        if (!this.startProduction) {
+            this._errors.push("Not enough productions to find a start production");
+        }
     }
 
 
@@ -49,7 +52,10 @@ class Grammar {
         row = row.replaceAll('->', ARROW);
 
         const prodSplit = row.split(ARROW);
-        //TODO check split
+        if (prodSplit.length !== 2) {
+            this._errors.push(row + ": contains to many or to less Arrows. Use -> for an arrow");
+            return
+        }
         const left = prodSplit[0].trim();
         this.nonTerminals.push(left);
 
