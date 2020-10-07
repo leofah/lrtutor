@@ -1,4 +1,4 @@
-const GRAPH_VERSION = '0.3';
+const GRAPH_VERSION = '0.4';
 
 const STYLE_STATE = 'state';
 const STYLE_FINAL_STATE = 'final'
@@ -14,6 +14,7 @@ const ATTR_FINAL = 'final';
 document.write('<script src="connectionHandler.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
+document.write('<script src="checkGraph.js"></script>')
 
 //add protoype function for cell to get the type (state, LR-Item) of the cell
 mxCell.prototype.getType = function () {
@@ -47,7 +48,6 @@ function main() {
 }
 
 function initGraph(grammar) {
-    console.log(grammar);
     const g = new mxGraph(document.getElementById('mxCanvas'), new mxGraphModel());
     // graph.setEnabled(false);
     g.setAllowDanglingEdges(false);
@@ -127,8 +127,7 @@ function addListeners(graph) {
     });
     graph.addListener(mxEvent.CELLS_MOVED, (_, evt) => {
         const cells = evt.getProperty('cells');
-        for (const i in cells) {
-            const cell = cells[i];
+        for (const cell of cells) {
             if (cell === graph.startState) {
                 redrawStartIndicator(graph)
             }
@@ -184,18 +183,16 @@ function setStartStateIntern(graph, state) {
     const startIndicator = graph.insertEdge(graph.getDefaultParent(), null, null, source, state);
     graph.startState = state;
     graph.getModel().remove(graph.startIndicatorSource);
-    graph.getModel().remove(graph.startIndicatorEdge);
     graph.startIndicatorSource = source;
-    graph.startIndicatorEdge = startIndicator;
 }
 
 function redrawStartIndicator(graph) {
     // move start state startIndicator if start state moved
-    const geo_start = graph.startState.getGeometry();
-    const geo_source = graph.startIndicatorSource.getGeometry().clone()
-    geo_source.x = geo_start.x - 30;
-    geo_source.y = geo_start.y + geo_start.height / 2
-    graph.getModel().setGeometry(graph.startIndicatorSource, geo_source);
+    const geoStart = graph.startState.getGeometry();
+    const geoSource = graph.startIndicatorSource.getGeometry().clone()
+    geoSource.x = geoStart.x - 30;
+    geoSource.y = geoStart.y + geoStart.height / 2
+    graph.getModel().setGeometry(graph.startIndicatorSource, geoSource);
 }
 
 // ------------ selected Cells actions-----------
@@ -205,8 +202,7 @@ function redrawStartIndicator(graph) {
  */
 function toggleFinalStates() {
     const selection = graph.getSelectionModel().cells;
-    for (const i in selection) {
-        const cell = selection[i];
+    for (const cell of selection) {
         if (cell.getType() === STYLE_STATE) {
             if (cell.getStyle() === STYLE_FINAL_STATE) {
                 graph.getModel().setStyle(cell, STYLE_STATE)
@@ -225,8 +221,7 @@ function deletedStates() {
     const selection = graph.getSelectionModel().cells;
     graph.getModel().beginUpdate();
     try {
-        for (const i in selection) {
-            const cell = selection[i];
+        for (const cell of selection) {
             if (cell.getType() === STYLE_STATE || cell.getType() === STYLE_EDGE) {
                 if (graph.startState !== cell) { //start state cannot be deleted (now)
                     graph.getModel().remove(cell);
@@ -246,8 +241,7 @@ function setStartState() {
     graph.getModel().beginUpdate();
     try {
         let newStartState = null;
-        for (const i in selection) {
-            const cell = selection[i];
+        for (const cell of selection) {
             if (cell.getType() === STYLE_STATE) {
                 if (newStartState === null) {
                     newStartState = cell;
@@ -297,25 +291,26 @@ function serializeGraph(graph) {
 
     //use mxCodec to create an XML representations of the graph
     const enc = new mxCodec();
-    const graph_xml = enc.encode(graph.getModel());
+    const graphXml = enc.encode(graph.getModel());
 
-    const root_xml = document.implementation.createDocument(null, "LRTutor", null);
-    const root_elem = root_xml.getElementsByTagName('LRTutor')[0];
-    root_elem.setAttribute('version', GRAPH_VERSION);
+    const rootXml = document.implementation.createDocument(null, "LRTutor", null);
+    const rootElem = rootXml.getElementsByTagName('LRTutor')[0];
+    rootElem.setAttribute('version', GRAPH_VERSION);
 
-    const graph_node = root_xml.createElement('Graph');
-    graph_node.appendChild(graph_xml);
-    root_elem.appendChild(graph_node);
+    const graphNode = rootXml.createElement('Graph');
+    graphNode.appendChild(graphXml);
+    rootElem.appendChild(graphNode);
 
     //save grammar
-    const grammar_node = root_xml.createElement('Grammar');
-    grammar_node.setAttribute('lr', graph.grammar.lr);
-    grammar_node.setAttribute('plain', graph.grammar.plain);
-    root_elem.appendChild(grammar_node);
+    const grammarNode = rootXml.createElement('Grammar');
+    grammarNode.setAttribute('lr', graph.grammar.lr);
+    grammarNode.setAttribute('plain', graph.grammar.plain);
+    rootElem.appendChild(grammarNode);
 
     //save start state
-    graph_node.setAttribute('start_state', graph.startState.id)
-    return mxUtils.getPrettyXml(root_xml);
+    graphNode.setAttribute('startState', graph.startState.id)
+    graphNode.setAttribute('startSource', graph.startIndicatorSource.id)
+    return mxUtils.getPrettyXml(rootXml);
 }
 
 function deSerializeGraph(serial) {
@@ -325,30 +320,33 @@ function deSerializeGraph(serial) {
      */
     try {
         const doc = mxUtils.parseXml(serial);
-        const graph_node = doc.getElementsByTagName('Graph')[0];
+        const graphNode = doc.getElementsByTagName('Graph')[0];
         const vers = doc.documentElement.getAttribute('version');
         if (vers !== GRAPH_VERSION) {
             return "Invalid File Version: '" + vers + "', need version: '" + GRAPH_VERSION + "'";
         }
 
         //add grammar
-        const grammar_node = doc.getElementsByTagName('Grammar')[0];
-        const grammar = new Grammar(grammar_node.getAttribute('plain'), grammar_node.getAttribute('lr'));
+        const grammarNode = doc.getElementsByTagName('Grammar')[0];
+        const grammar = new Grammar(grammarNode.getAttribute('plain'), grammarNode.getAttribute('lr'));
         changeGrammarDOM(grammar);
-        if (grammar._errors)
+        if (grammar.error())
             return;
         if (!graphActive)
             initGraph(grammar);
         else
             graph.grammar = grammar;
 
-        const graph_doc = mxUtils.parseXml(graph_node.innerHTML);
-        const codec = new mxCodec(graph_doc);
-        codec.decode(graph_node.firstElementChild, graph.getModel());
+        const graphDocument = mxUtils.parseXml(graphNode.innerHTML);
+        const codec = new mxCodec(graphDocument);
+        codec.decode(graphNode.firstElementChild, graph.getModel());
 
         //set start state
-        const start_id = graph_node.getAttribute('start_state');
-        graph.startState = graph.getModel().cells[start_id];
+        const startID = graphNode.getAttribute('startState');
+        graph.startState = graph.getModel().cells[startID];
+        const startSourceID = graphNode.getAttribute('startSource');
+        graph.startIndicatorSource = graph.getModel().cells[startSourceID];
+
         //TODO start StaTe Indicator
 
     } catch (e) {
@@ -416,7 +414,7 @@ function setGrammar(plainGrammar, lr0) {
     const lr = lr0 ? 0 : 1;
     const grammar = new Grammar(plainGrammar, lr);
     changeGrammarDOM(grammar);
-    if (grammar._errors)
+    if (grammar.error())
         return;
     initGraph(grammar);
 }
@@ -434,7 +432,7 @@ function changeGrammarDOM(grammar) {
 
     const pre = document.createElement('pre');
     pre.setAttribute('id', 'grammar');
-    if (grammar._errors) {
+    if (grammar.error()) {
         const p = document.createElement('p');
         p.appendChild(document.createTextNode("Error in Grammar Definition:"));
         nodeGrammar.appendChild(p);

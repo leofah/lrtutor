@@ -34,6 +34,7 @@ class Grammar {
         }
 
         this.plain = this.plainProductions.join('\n');
+        this.plainProductionsShort = this.plainProductions.map(v => v.replaceAll(' ', ''))
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
         this.startProduction = this.productions[0];
         if (!this.startProduction) {
@@ -57,7 +58,8 @@ class Grammar {
             return
         }
         const left = prodSplit[0].trim();
-        this.nonTerminals.push(left);
+        if (!this.nonTerminals.includes(left))
+            this.nonTerminals.push(left);
 
         const prods = prodSplit[1].split(DELIMITER);
         for (const prod of prods) {
@@ -92,8 +94,12 @@ class Grammar {
         this.plainProductions.push(prod);
     }
 
+    error() {
+        return this._errors.length !== 0;
+    }
+
     isLRItem(itemText) {
-        let text = itemText.trim().replace(' ', '');
+        let text = itemText.trim().replaceAll(' ', '');
 
         if (this.lr === 1) {
             const split = text.split('{');
@@ -108,6 +114,6 @@ class Grammar {
         if (shortText.length + 1 !== text.length) { //only one DOT should be replaced
             return false;
         }
-        return this.plainProductions.includes(shortText);
+        return this.plainProductionsShort.includes(shortText);
     }
 }
