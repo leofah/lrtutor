@@ -1,4 +1,4 @@
-const GRAPH_VERSION = '0.2';
+const GRAPH_VERSION = '0.3';
 
 const STYLE_STATE = 'state';
 const STYLE_FINAL_STATE = 'final'
@@ -35,47 +35,41 @@ mxCell.prototype.getType = function () {
 }
 
 let graph = new mxGraph();
+let graphActive = false; //indicates if a graph and grammar is already loaded
 
-function main(container) {
+function main() {
     //checks if browser is supported
     if (!mxClient.isBrowserSupported()) {
         mxUtils.error('Unsupported Browser', 200, false);
     }
-    //init graph on canvas
-    graph = initGraph(container);
-    setStylsheet(graph);
-    addListeners(graph);
-    addStartState(graph);
 }
 
-function initGraph(container) {
-    const graph = new mxGraph(container, new mxGraphModel());
+function initGraph(grammar) {
+    const g = new mxGraph(document.getElementById('mxCanvas'), new mxGraphModel());
     // graph.setEnabled(false);
-    graph.setAllowDanglingEdges(false);
-    graph.setDisconnectOnMove(false);
+    g.setAllowDanglingEdges(false);
+    g.setDisconnectOnMove(false);
     // graph.setConnectable(true); //not needed if custom connectionHandler implemented and activated
     // graph.setAllowLoops(true); //works with the built in mxGraph connection Handler
-    graph.setEdgeLabelsMovable(false);
-    graph.setAutoSizeCells(true); //TODO autosize
-    graph.setCellsResizable(false);
+    g.setEdgeLabelsMovable(false);
+    g.setAutoSizeCells(true); //TODO autosize
+    g.setCellsResizable(false);
+    g.foldingEnabled = false;
 
-    graph.ownConnectionHandler = new connectionHandler(graph)
-    graph.addMouseListener(graph.ownConnectionHandler);
-    graph.editHandler = new editHandler(graph);
-    graph.grammar = new Grammar();
+    g.ownConnectionHandler = new connectionHandler(g)
+    g.addMouseListener(g.ownConnectionHandler);
+    g.editHandler = new editHandler(g);
+    g.grammar = grammar;
 
-    //values of states are XML Node, which need to have a name, but not displayed
-    // graph.convertValueToString = function (cell) {
-    //     const value = cell.value
-    //     if (mxUtils.isNode(value)) {
-    //         return '';
-    //     } else if (typeof (value.toString) == 'function') {
-    //         return value.toString();
-    //     }
-    //     return '';
-    // }
+    setStylsheet(g);
+    addListeners(g);
+    addStartState(g);
 
-    return graph;
+    //set global graph information
+    graphActive = true;
+    graph = g;
+
+    return g;
 }
 
 function setStylsheet(graph) {
@@ -94,6 +88,7 @@ function setStylsheet(graph) {
 
     //lritem
     lritem_style[mxConstants.STYLE_MOVABLE] = 0;
+    lritem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
 
     //edge
 
@@ -128,42 +123,17 @@ function addListeners(graph) {
         //     console.log(evt);
     });
     graph.addListener(mxEvent.CELLS_MOVED, (_, evt) => {
-        console.log(evt);
         const cells = evt.getProperty('cells');
         for (const i in cells) {
             const cell = cells[i];
             if (cell === graph.startState) {
-                // move start state startIndicator if start state moved
-                const geo_start = cell.getGeometry();
-                const geo_source = graph.startIndicatorSource.getGeometry().clone()
-                geo_source.x = geo_start.x - 30;
-                geo_source.y = geo_start.y + geo_start.height / 2
-                graph.getModel().setGeometry(graph.startIndicatorSource, geo_source);
+                redrawStartIndicator(graph)
             }
         }
     });
 }
 
 // ---------------- stuff ------------------------
-
-function addStartState(graph) {
-    //add start state to graph
-    graph.getModel().beginUpdate();
-    const X = 200, Y = 200;
-    const width = 80;
-    const height = 30;
-    try {
-        const node = null;
-        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
-        // Add LR ITem
-        graph.insertVertex(startState, null, "S' ➜ •E", 0, 20, 40, 20, STYLE_LR_ITEM);
-
-        // set start state and add startIndicator edge
-        setStartStateIntern(graph, startState);
-    } finally {
-        graph.getModel().endUpdate();
-    }
-}
 
 function addState(graph, locX, loxY) {
     // adds a state to the graph on given position and returns the created cell
@@ -181,6 +151,25 @@ function addState(graph, locX, loxY) {
     return state;
 }
 
+function addStartState(graph) {
+    //add start state to graph
+    graph.getModel().beginUpdate();
+    const X = 200, Y = 200;
+    const width = 80;
+    const height = 30;
+    try {
+        const node = null;
+        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
+        // Add LR ITem
+        graph.insertVertex(startState, null, "S' ➜ •E", 5, 5, 40, 20, STYLE_LR_ITEM);
+
+        // set start state and add startIndicator edge
+        setStartStateIntern(graph, startState);
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+
 function setStartStateIntern(graph, state) {
     if (state == null)
         return;
@@ -194,6 +183,17 @@ function setStartStateIntern(graph, state) {
     graph.startIndicatorSource = source;
     graph.startIndicatorEdge = startIndicator;
 }
+
+function redrawStartIndicator(graph) {
+    // move start state startIndicator if start state moved
+    const geo_start = graph.startState.getGeometry();
+    const geo_source = graph.startIndicatorSource.getGeometry().clone()
+    geo_source.x = geo_start.x - 30;
+    geo_source.y = geo_start.y + geo_start.height / 2
+    graph.getModel().setGeometry(graph.startIndicatorSource, geo_source);
+}
+
+// ------------ selected Cells actions-----------
 
 /**
  * toggles the final state attribute on the selected States
@@ -262,19 +262,19 @@ function setStartState() {
 
 // ------------ Zooming---------------
 function zoomIn() {
-    if (graph) {
+    if (graphActive) {
         graph.zoomIn();
     }
 }
 
 function zoomOut() {
-    if (graph) {
+    if (graphActive) {
         graph.zoomOut();
     }
 }
 
 function resetZoom() {
-    if (graph) {
+    if (graphActive) {
         graph.zoomActual();
     }
 }
@@ -293,12 +293,20 @@ function serializeGraph(graph) {
     //use mxCodec to create an XML representations of the graph
     const enc = new mxCodec();
     const graph_xml = enc.encode(graph.getModel());
+
     const root_xml = document.implementation.createDocument(null, "LRTutor", null);
     const root_elem = root_xml.getElementsByTagName('LRTutor')[0];
     root_elem.setAttribute('version', GRAPH_VERSION);
+
     const graph_node = root_xml.createElement('Graph');
     graph_node.appendChild(graph_xml);
     root_elem.appendChild(graph_node);
+
+    //save grammar
+    const grammar_node = root_xml.createElement('Grammar');
+    grammar_node.setAttribute('lr', graph.grammar.lr);
+    grammar_node.setAttribute('plain', graph.grammar.plain);
+    root_elem.appendChild(grammar_node);
 
     //save start state
     graph_node.setAttribute('start_state', graph.startState.id)
@@ -318,6 +326,15 @@ function deSerializeGraph(serial) {
             return "Invalid File Version: '" + vers + "', need version: '" + GRAPH_VERSION + "'";
         }
 
+        //add grammar
+        const grammar_node = doc.getElementsByTagName('Grammar')[0];
+        const grammar = new Grammar(grammar_node.getAttribute('plain'), grammar_node.getAttribute('lr'));
+        changeGrammarDOM(grammar);
+        if (!graphActive)
+           initGraph(grammar);
+        else
+            graph.grammar = grammar;
+
         const graph_doc = mxUtils.parseXml(graph_node.innerHTML);
         const codec = new mxCodec(graph_doc);
         codec.decode(graph_node.firstElementChild, graph.getModel());
@@ -325,6 +342,7 @@ function deSerializeGraph(serial) {
         //set start state
         const start_id = graph_node.getAttribute('start_state');
         graph.startState = graph.getModel().cells[start_id];
+        //TODO start StaTe Indicator
 
     } catch (e) {
         return "Invalid File Format: " + e;
@@ -332,11 +350,13 @@ function deSerializeGraph(serial) {
 }
 
 function saveGraph() {
-    saveFile('graph.xml', serializeGraph(graph), 'text/xml');
+    if (graphActive)
+        saveFile('graph.xml', serializeGraph(graph), 'text/xml');
 }
 
 function loadGraph() {
     loadFile(serial => {
+        // remove grammar input
         const error = deSerializeGraph(serial);
         if (error)
             console.log(error);
@@ -383,4 +403,31 @@ function loadFile(func) {
     document.body.appendChild(elem);
     elem.click();
     document.body.removeChild(elem);
+}
+
+function setGrammar(plainGrammar, lr0) {
+    const lr = lr0 ? 0 : 1;
+    const grammar = new Grammar(plainGrammar, lr);
+    changeGrammarDOM(grammar);
+    initGraph(grammar);
+}
+
+function changeGrammarDOM(grammar) {
+    const nodeGrammar = document.createElement('div');
+
+    const h3 = document.createElement('h3');
+    h3.appendChild(document.createTextNode("Grammar"));
+    nodeGrammar.appendChild(h3);
+
+    const lr = document.createElement('p');
+    lr.appendChild(document.createTextNode("LR" + grammar.lr));
+    nodeGrammar.appendChild(lr);
+
+    const pre = document.createElement('pre');
+    pre.setAttribute('id', 'grammar');
+    pre.appendChild(document.createTextNode(grammar.plain));
+    nodeGrammar.appendChild(pre);
+
+    const node = document.getElementById('div-grammar');
+    node.replaceChild(nodeGrammar, node.getElementsByTagName('div')[0],);
 }

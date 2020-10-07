@@ -8,7 +8,7 @@
   </script>
   <script type="text/javascript" src="mxGraph/src/js/mxClient.js"></script>
 </head>
-<body onload="main(document.getElementById('mxCanvas'))">
+<body onload="main()">
 <div>
   <ul>
     <li>To create ➜ or • in a state, insert '->' oder '.'</li>
@@ -27,7 +27,23 @@
   <button id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
   <button id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
 </div>
+<div id="div-grammar">
+  <div>
+    <label for="grammarTextArea"></label>
+    <textarea id="grammarTextArea" rows="10" cols="40" placeholder="Grammar"></textarea>
+    <label for="radio0">LR0</label>
+    <input type="radio" name="LR" id="radio0" value="0" checked>
+    <label for="radio1">LR1</label>
+    <input type="radio" name="LR" id="radio1" value="1">
+
+    <button id="setGrammar"
+            onclick="setGrammar(document.getElementById('grammarTextArea').value, document.getElementById('radio0').checked)">
+      Set new Grammar
+    </button>
+  </div>
+</div>
 <div>
+  Zoom:
   <button id="zoomIn" onclick="zoomIn()">+</button>
   <button id="resetZoom" onclick="resetZoom()">reset</button>
   <button id="zoomOut" onclick="zoomOut()">-</button>
