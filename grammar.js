@@ -90,7 +90,7 @@ class Grammar {
             right = [EPSILON];
         rightString = right.join(" ");
         const prod = left + ARROW + rightString;
-        this.productions.push([left, right]);
+        this.productions.push({left, right});
         this.plainProductions.push(prod);
     }
 
@@ -115,5 +115,49 @@ class Grammar {
             return false;
         }
         return this.plainProductionsShort.includes(shortText);
+    }
+
+    computeEpsilonClosure(lrItems) {
+        /**
+         * Computes the Epsilon Closure of given LR Items
+         * LRItems: [A->a.b, B->.A]
+         * @return list of LRItem texts which are in the closure of the given LR ITems
+         */
+
+        //TODO expand LR1 Items a->.b {1,2} => a->.b {1}, a->.b {2}
+        let workQueue = [];
+        const closure = [];
+        for (const item of lrItems) {
+            workQueue.push(item);
+        }
+
+        while (workQueue.length !== 0) {
+            const current = workQueue.pop()
+            if (closure.includes(current))
+                continue;
+            closure.push(current);
+            workQueue = workQueue.concat(this.getNextEpsilonLRItems(current));
+        }
+        // TODO reduce LR1 items again
+        return closure;
+    }
+
+    getNextEpsilonLRItems(itemText) {
+        //TODO handle LR1 items correct
+        //TODO handle Epsilon transitions A->.e
+
+        const rightOfDot = itemText.split(DOT)[1];
+        if (rightOfDot.length === 0)
+            return [];
+
+        const NonTerminal = rightOfDot.split(' ')[0];
+        const result = []
+
+        for (const prod of this.productions) {
+            if (prod.left !== NonTerminal)
+                continue;
+            result.push(prod.left + ARROW + DOT + prod.right.join(' '))
+        }
+        return result;
     }
 }

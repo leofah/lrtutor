@@ -164,7 +164,7 @@ function addStartState(graph) {
         const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
         // Add LR ITem
         const prod = graph.grammar.startProduction;
-        const prodString = prod[0] + ARROW + DOT + prod[1].join(" ");
+        const prodString = prod.left + ARROW + DOT + prod.right.join(" ");
         graph.insertVertex(startState, null, prodString, 5, 5, 40, 20, STYLE_LR_ITEM);
 
         // set start state and add startIndicator edge
