@@ -79,7 +79,7 @@ class editHandler {
         //pretty characters for LR Items
         text = text.replace(".", DOT).replace("->", ARROW);
         //check if correct lritem
-        if (!this.graph.grammar.isLRItem(text)) {
+        if (!this.graph.grammar.parseLRItem(text)) {
             // return "error";
         }
         return text;

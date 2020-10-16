@@ -4,9 +4,10 @@
 
 const DOT = '•';
 const ARROW = '➜';
-const EPSILON = 'Ɛ'
+const EPSILON = 'Ɛ' //TODO handle epsilon transitions?
 const DELIMITER = '|';
-const NOT_ALLOWED_TERMINALS = [DOT, ARROW, EPSILON, '{', '}'];
+const START_NON_TERMINAL = "S'"
+const NOT_ALLOWED_TERMINALS = [DOT, ARROW, EPSILON, START_NON_TERMINAL, '->', '.', '{', '}', ','];
 
 class Grammar {
     /**
@@ -23,6 +24,7 @@ class Grammar {
         this.nonTerminals = [];
         this.productions = [];
         this.plainProductions = [];
+        this.lrItemMap = {};
 
         // parse helper
         this._someTerminal = [];
@@ -33,13 +35,20 @@ class Grammar {
             this.addInputRow(row)
         }
 
+        //start production is always S' -> ...
+        //If not present add
+        this.startProduction = this.productions.filter(v => v.left === START_NON_TERMINAL)[0];
+        if (!this.startProduction) {
+            if (this.productions.length === 0)
+                this._errors.push("Not enough production to make a reasonable exercise");
+            else
+                this.startProduction = this.addProduction(START_NON_TERMINAL, [this.productions[0].left]);
+        }
+
+        //set object variables
         this.plain = this.plainProductions.join('\n');
         this.plainProductionsShort = this.plainProductions.map(v => v.replaceAll(' ', ''))
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
-        this.startProduction = this.productions[0];
-        if (!this.startProduction) {
-            this._errors.push("Not enough productions to find a start production");
-        }
     }
 
 
@@ -85,36 +94,110 @@ class Grammar {
     }
 
     addProduction(left, right) {
-        let rightString;
         if (right.length === 0)
             right = [EPSILON];
-        rightString = right.join(" ");
-        const prod = left + ARROW + rightString;
-        this.productions.push({left, right});
+
+        const prod = left + ARROW + right.join(" ");
         this.plainProductions.push(prod);
+
+        const prodObject = {left, right};
+        this.productions.push(prodObject);
+        return prodObject;
     }
 
     error() {
         return this._errors.length !== 0;
     }
 
-    isLRItem(itemText) {
+    parseLRItem(itemText) {
+        /**parses the content of an lr item in the graph and returns the relevant parts.
+         * The Lookahead set is only returned if this is an LR1 Grammar
+         * The LR Item looks like this, with arbitrary many spaces: left -> right1 . right2 { lookahead }
+         * If no production can be matched to the item text {} is returned
+         * right1, right2 and lookahead are arrays
+         @return {left, right1, right2, lookahead} if everything is alright, else 'false'
+         */
+
+        if (this.lrItemMap[itemText]) {
+            return this.lrItemMap[itemText];
+        }
+        const result = this.parseLRItemHelp(itemText);
+        this.lrItemMap[itemText] = result;
+        return result;
+    }
+
+    parseLRItemHelp(itemText) {
         let text = itemText.trim().replaceAll(' ', '');
 
+        //check for lookahead set in lr 1 grammars
+        let lookahead
         if (this.lr === 1) {
             const split = text.split('{');
-            if (split.length !== 2) { //one
-                return false;
+            if (split.length !== 2) return false; //exactly one { needed
+
+            text = split[0]; //text without lookahead set
+            if (!split[1].endsWith('}')) return false;
+
+            const setString = split[1].replace('}', '');
+            const set = setString.split(',');
+            for (const terminal of set) {
+                if (terminal === EPSILON) continue; //Epsilon Lookahead allowed
+                if (!this.terminals.includes(terminal)) return false;
             }
-            text = split[0];
-            const lr1lookahead = '{' + split[1];
-            //TODO check lookahead set
+            lookahead = set;
         }
-        const shortText = text.replace(DOT, '');
-        if (shortText.length + 1 !== text.length) { //only one DOT should be replaced
+
+        //retrieve Variables
+        const split = text.split(ARROW);
+        if (split.length !== 2) return false; //only one ARROW
+        const left = split[0].trim();
+
+        const rightSplit = split[1].split(DOT);
+        if (rightSplit.length !== 2) return false; //only one DOT
+        const right1String = rightSplit[0].trim();
+        const right2String = rightSplit[1].trim();
+
+        //TODO parse...
+        //check if production exists
+        const possibleProductions = this.productions.filter(p => p.left === left);
+        let correctProduction;
+        for (const prod of possibleProductions) {
+            //does not handle similar productions like A -> a b; A -> ab, with a, b, ab as Terminals
+            //but this is a bad grammar design and ignored in this case
+            const prodRight = prod.right.join('');
+            const checkRight = (right1String + right2String).replace(' ', '');
+            if (prodRight === checkRight) {
+                correctProduction = prod;
+                break;
+            }
+        }
+        if (!correctProduction) return false;
+
+        // check if dot is correct location (not in between a terminal like A -> i.nt with 'int' as terminal)
+        let right1, right2;
+        if (right1String === '') {
+            right1 = [];
+            right2 = correctProduction.right;
+        } else {
+            let rightTMP = '';
+            for (const i in correctProduction.right) {
+                const terminal = correctProduction.right[i];
+                rightTMP += terminal;
+                if (right1String === rightTMP) {
+                    right1 = correctProduction.right.slice(0, i + 1);
+                    right2 = correctProduction.right.slice(i + 1, correctProduction.right.length);
+                    break;
+                }
+            }
+        }
+        if (!right1 && !right2) {
             return false;
         }
-        return this.plainProductionsShort.includes(shortText);
+
+        //return result
+        if (this.lr === 1)
+            return {left, right1, right2, lookahead};
+        return {left, right1, right2};
     }
 
     computeEpsilonClosure(lrItems) {
@@ -124,7 +207,7 @@ class Grammar {
          * @return list of LRItem texts which are in the closure of the given LR ITems
          */
 
-        //TODO expand LR1 Items a->.b {1,2} => a->.b {1}, a->.b {2}
+            //TODO expand LR1 Items a->.b {1,2} => a->.b {1}, a->.b {2}
         let workQueue = [];
         const closure = [];
         for (const item of lrItems) {

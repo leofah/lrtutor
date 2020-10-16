@@ -30,7 +30,8 @@ function checkCorrectLrItems(graph) {
         if (cell.getType() !== STYLE_LR_ITEM)
             continue;
 
-        if (!graph.grammar.isLRItem(cell.getValue()))
+        const valueCorrect = graph.grammar.parseLRItem(cell.getValue());
+        if (valueCorrect === false)
             incorrect.push(cell)
         else
             correct.push(cell)
@@ -54,7 +55,7 @@ function checkCorrectClosure(graph) {
                 console.log(lrItem + ' has wrong type?!')
                 continue;
             }
-            if (graph.grammar.isLRItem(lrItem.value)) //TODO faster?
+            if (graph.grammar.parseLRItem(lrItem.value) !== false)
                 lrItems.push((lrItem.value))
         }
 
