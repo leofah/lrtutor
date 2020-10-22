@@ -61,14 +61,12 @@ function checkCorrectClosure(graph) {
 
         const closure = graph.grammar.computeEpsilonClosure(lrItems);
 
-        const isSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
-        //TODO handle spaces in lritems
-        if (isSetsEqual(new Set(closure), new Set(lrItems)))
+        if (isSetsEqual(closure, lrItems.map(item => graph.grammar.parseLRItem(item))))
             correct.push(cell);
         else {
             incorrect.push(cell);
-            console.log("Incorrect Closure on Cell")
-            console.log(cell)
+            console.log("Incorrect Closure on Cell");
+            console.log(cell);
         }
     }
 

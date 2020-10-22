@@ -67,7 +67,7 @@ class Grammar {
             return
         }
         const left = prodSplit[0].trim();
-        if (!this.nonTerminals.includes(left))
+        if (left !== START_NON_TERMINAL && !this.nonTerminals.includes(left))
             this.nonTerminals.push(left);
 
         const prods = prodSplit[1].split(DELIMITER);
@@ -112,8 +112,8 @@ class Grammar {
     parseLRItem(itemText) {
         /**parses the content of an lr item in the graph and returns the relevant parts.
          * The Lookahead set is only returned if this is an LR1 Grammar
-         * The LR Item looks like this, with arbitrary many spaces: left -> right1 . right2 { lookahead }
-         * If no production can be matched to the item text {} is returned
+         * this is the lrItems format with arbitrary many spaces: left -> right1 . right2 { lookahead }
+         * If no production can be matched 'false' is returned
          * right1, right2 and lookahead are arrays
          @return {left, right1, right2, lookahead} if everything is alright, else 'false'
          */
@@ -136,12 +136,12 @@ class Grammar {
             if (split.length !== 2) return false; //exactly one { needed
 
             text = split[0]; //text without lookahead set
-            if (!split[1].endsWith('}')) return false;
+            if (!split[1].trim().endsWith('}')) return false;
 
             const setString = split[1].replace('}', '');
             const set = setString.split(',');
             for (const terminal of set) {
-                if (terminal === EPSILON) continue; //Epsilon Lookahead allowed
+                if (terminal === EPSILON) continue; //Epsilon Lookahead allowed TODO epsilon lookahead, empty lookahead
                 if (!this.terminals.includes(terminal)) return false;
             }
             lookahead = set;
@@ -154,10 +154,9 @@ class Grammar {
 
         const rightSplit = split[1].split(DOT);
         if (rightSplit.length !== 2) return false; //only one DOT
-        const right1String = rightSplit[0].trim();
-        const right2String = rightSplit[1].trim();
+        const right1String = rightSplit[0].trim().replace(' ', '');
+        const right2String = rightSplit[1].trim().replace(' ', '');
 
-        //TODO parse...
         //check if production exists
         const possibleProductions = this.productions.filter(p => p.left === left);
         let correctProduction;
@@ -165,7 +164,7 @@ class Grammar {
             //does not handle similar productions like A -> a b; A -> ab, with a, b, ab as Terminals
             //but this is a bad grammar design and ignored in this case
             const prodRight = prod.right.join('');
-            const checkRight = (right1String + right2String).replace(' ', '');
+            const checkRight = (right1String + right2String);
             if (prodRight === checkRight) {
                 correctProduction = prod;
                 break;
@@ -173,7 +172,7 @@ class Grammar {
         }
         if (!correctProduction) return false;
 
-        // check if dot is correct location (not in between a terminal like A -> i.nt with 'int' as terminal)
+        // check if dot is in correct location (not in between a terminal like A -> i.nt with 'int' as terminal)
         let right1, right2;
         if (right1String === '') {
             right1 = [];
@@ -211,12 +210,32 @@ class Grammar {
         let workQueue = [];
         const closure = [];
         for (const item of lrItems) {
-            workQueue.push(item);
+            const parsedItem = this.parseLRItem(item);
+            if (parsedItem === false) continue;
+            if (this.lr === 1) {
+                for (const ahead of parsedItem.lookahead) {
+                    workQueue.push({
+                        'left': parsedItem.left,
+                        'right1': parsedItem.right1,
+                        'right2': parsedItem.right2,
+                        'ahead': ahead
+                    });
+                }
+            } else {
+                workQueue.push(parsedItem);
+            }
         }
 
+        let i = 0 //prevent infinite loops
         while (workQueue.length !== 0) {
+            if (i++ > 10000) {
+                console.log("Endless loop?")
+                break;
+            }
+
             const current = workQueue.pop()
-            if (closure.includes(current))
+            // if (closure.includes(current)) // does not work cause strict equality is needed
+            if (arrayIncludes(closure, current))
                 continue;
             closure.push(current);
             workQueue = workQueue.concat(this.getNextEpsilonLRItems(current));
@@ -225,21 +244,22 @@ class Grammar {
         return closure;
     }
 
-    getNextEpsilonLRItems(itemText) {
+    getNextEpsilonLRItems(parsedItem) {
         //TODO handle LR1 items correct
         //TODO handle Epsilon transitions A->.e
 
-        const rightOfDot = itemText.split(DOT)[1];
-        if (rightOfDot.length === 0)
-            return [];
-
-        const NonTerminal = rightOfDot.split(' ')[0];
+        const NonTerminal = parsedItem.right2[0];
         const result = []
 
         for (const prod of this.productions) {
             if (prod.left !== NonTerminal)
                 continue;
-            result.push(prod.left + ARROW + DOT + prod.right.join(' '))
+            //TODO lookahead set
+            result.push({
+                'left': prod.left,
+                'right1': [],
+                'right2': prod.right,
+            })
         }
         return result;
     }

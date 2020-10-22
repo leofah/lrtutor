@@ -15,6 +15,7 @@ document.write('<script src="connectionHandler.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
 document.write('<script src="checkGraph.js"></script>')
+document.write('<script src="utils.js"></script>')
 
 //add protoype function for cell to get the type (state, LR-Item) of the cell
 mxCell.prototype.getType = function () {
