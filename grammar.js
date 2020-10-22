@@ -199,7 +199,7 @@ class Grammar {
         return {left, right1, right2};
     }
 
-    computeEpsilonClosure(lrItems) {
+    computeEpsilonClosure(lrItems, alreadyParsed=false) {
         /**
          * Computes the Epsilon Closure of given LR Items
          * LRItems: [A->a.b, B->.A]
@@ -210,7 +210,7 @@ class Grammar {
         let workQueue = [];
         const closure = [];
         for (const item of lrItems) {
-            const parsedItem = this.parseLRItem(item);
+            const parsedItem = alreadyParsed ? item : this.parseLRItem(item);
             if (parsedItem === false) continue;
             if (this.lr === 1) {
                 for (const ahead of parsedItem.lookahead) {
@@ -226,13 +226,7 @@ class Grammar {
             }
         }
 
-        let i = 0 //prevent infinite loops
         while (workQueue.length !== 0) {
-            if (i++ > 10000) {
-                console.log("Endless loop?")
-                break;
-            }
-
             const current = workQueue.pop()
             // if (closure.includes(current)) // does not work cause strict equality is needed
             if (arrayIncludes(closure, current))
@@ -262,5 +256,19 @@ class Grammar {
             })
         }
         return result;
+    }
+
+    shiftLrItem(parsedItem) {
+        if (parsedItem.right2.length === 0) return;
+        const shiftTerm = parsedItem.right2[0];
+        const item =  {
+            'left': parsedItem.left,
+            'right1': parsedItem.right1.concat([shiftTerm]),
+            'right2': parsedItem.right2.slice(1, -1),
+        }
+        if (this.lr === 1) {
+            item['lookahead'] = parsedItem.lookahead;
+        }
+        return [item, shiftTerm];
     }
 }

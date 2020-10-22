@@ -1,13 +1,16 @@
 //found on https://dmitripavlutin.com/how-to-compare-objects-in-javascript/
+/**
+ * checks if two objects have the same keys and values recursively
+ * @param object1: object to compare
+ * @param object2: object to compare
+ * @return boolean, whether the objects are the same
+ */
 function deepEqual(object1, object2) {
-    /**
-     * checks if two objects have the same keys and values recursively
-     * @param object1, object2: objects to compare
-     * @return boolean, whether the objects are the same
-     */
     function isObject(object) {
         return object != null && typeof object === 'object';
     }
+
+    if (object1 === object2) return true;
 
     const keys1 = Object.keys(object1);
     const keys2 = Object.keys(object2);
@@ -39,4 +42,4 @@ const arrayIncludes = (array, value) => array.filter(v => deepEqual(v, value)).l
  * javascript sets don't check for deep equal so two same objects can be in the set
  * @return boolean: true if sets are equal
  */
-const isSetsEqual = (a, b) => a.every(value => arrayIncludes(b, value));
+const isSetsEqual = (a, b) => a.every(v => arrayIncludes(b, v)) && b.every(v => arrayIncludes(a, v));
