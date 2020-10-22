@@ -8,8 +8,13 @@ function checkGraph() {
     console.log(transitionCheck);
 
     //highlight errors:
-    for (const cell of lrCheck.incorrect.concat(closureCheck.incorrect)) {
+    for (const cell of lrCheck.incorrect.concat(closureCheck.incorrect).concat(transitionCheck.incorrect)) {
         const errorHighlight = new mxCellHighlight(graph, 'red', 1);
+        errorHighlight.highlight(graph.view.getState(cell));
+        errorHighlights.push(errorHighlight);
+    }
+    for (const cell of lrCheck.correct.concat(closureCheck.correct).concat(transitionCheck.correct)) {
+        const errorHighlight = new mxCellHighlight(graph, 'green', 1);
         errorHighlight.highlight(graph.view.getState(cell));
         errorHighlights.push(errorHighlight);
     }
@@ -68,22 +73,18 @@ function checkCorrectClosure(graph) {
 }
 
 function checkTransitions(graph) {
-    const incorrectClosure = [];
-    const correctClosure = [];
+    const incorrect = [];
+    const correct = [];
 
-    const stateNeedsItems = new Map();
     const stateIncorrectTransitions = new Map();
 
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        //outgoing transitions to check
+        const missingTransitions = new Set();
         const needsTransitions = new Set();
-        const transitions = new Map();
-        for (const edge of cell.edges) {
-            if (edge.getTerminal(true) !== cell) continue;
-            transitions.set(edge.value, edge.getTerminal(false).id);
-        }
+        //map needed cause multiple LRItems can have the same shift terminal and then multiple closures needs to be built
+        const targetItems = new Map(); // maps 'targedID terminal' -> shiftedItems
 
         //shift each lrItem and check the transitions for the shifted terminal
         for (const lrItem of cell.children) {
@@ -95,41 +96,55 @@ function checkTransitions(graph) {
             const shift = graph.grammar.shiftLrItem(parsedItem);
             if (!shift) continue; //final items don't shift
 
-            const item = shift[0];
+            const shiftedItem = shift[0];
             const terminal = shift[1];
-            const toState = transitions.get(terminal);
-
             needsTransitions.add(terminal);
-            if (toState) stateNeedsItems.set(toState, [item].concat(stateNeedsItems.get(toState)));
-            //TODO check closure here
+
+            //find the transition and check it
+            const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
+            if (!edge) {
+                //no transition found -> is missing and check next lrItem
+                missingTransitions.add(terminal);
+                continue;
+            }
+
+            //check if the targetState has the correct closure for this transition
+            const targetState = edge.getTerminal(false);
+            const key = targetState.id + ' ' + terminal;
+            targetItems.set(key, [shiftedItem].concat(targetItems.get(key)))
+        }
+
+        //check the closure for the target items
+        for (const e of targetItems.entries()) {
+            const key = e[0];
+            const targetID = key.split(' ')[0];
+            const terminal = key.split(' ')[1];
+            const shiftedItem = e[1];
+            const targetState = graph.getModel().getCell(targetID);
+            const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
+
+            const closure = graph.grammar.computeEpsilonClosure(shiftedItem, true)
+
+            const lrItems = [];
+            for (const lrItem of targetState.children) {
+                if (lrItem.getType() !== STYLE_LR_ITEM) continue;
+                if (graph.grammar.parseLRItem(lrItem.value) !== false) lrItems.push((lrItem.value))
+            }
+
+            if (isSetsEqual(closure, lrItems.map(item => graph.grammar.parseLRItem(item))))
+                correct.push(edge);
+            else
+                incorrect.push(edge);
+
         }
 
         //filter for extra and missing transitions
-        const hasTransitions = [...transitions.keys()];
-        const extraTransitions = hasTransitions.filter(v => needsTransitions.has(v));
-        for (const label of hasTransitions) {
-            needsTransitions.delete(label);
-        }
-        stateIncorrectTransitions.set(cell.id, {extraTransitions, needsTransitions});
+        const hasTransitions = cell.edges.filter(e => e.getTerminal(true) === cell).map(e => e.value);
+        const extraTransitions = hasTransitions.filter(v => !needsTransitions.has(v));
+        stateIncorrectTransitions.set(cell.id, {extraTransitions, missingTransitions});
     }
 
-    //check exact closure of target States
-    for (const cell of Object.values(graph.getModel().cells)) {
-        if (cell.getType() !== STYLE_STATE) continue;
-
-        const needsItems = stateNeedsItems.get(cell.id) ? stateNeedsItems.get(cell.id).filter(v => v) : [];
-        const closure = graph.grammar.computeEpsilonClosure(needsItems, true)
-
-        const lrItems = [];
-        for (const lrItem of cell.children) {
-            if (lrItem.getType() !== STYLE_LR_ITEM) continue;
-            if (graph.grammar.parseLRItem(lrItem.value) !== false) lrItems.push((lrItem.value))
-        }
-
-        if (isSetsEqual(closure, lrItems.map(item => graph.grammar.parseLRItem(item)))) correctClosure.push(cell);
-        else incorrectClosure.push(cell);
-
-    }
-
-    return {incorrectClosure, correctClosure, stateIncorrectTransitions};
+    return {incorrect, correct, stateIncorrectTransitions};
 }
+
+//TODO check start and final states

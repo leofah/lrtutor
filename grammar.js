@@ -173,13 +173,14 @@ class Grammar {
         if (!correctProduction) return false;
 
         // check if dot is in correct location (not in between a terminal like A -> i.nt with 'int' as terminal)
+        // and splices the array for the result
         let right1, right2;
         if (right1String === '') {
             right1 = [];
             right2 = correctProduction.right;
         } else {
             let rightTMP = '';
-            for (const i in correctProduction.right) {
+            for (let i = 0; i < correctProduction.right.length; i++) {
                 const terminal = correctProduction.right[i];
                 rightTMP += terminal;
                 if (right1String === rightTMP) {
@@ -211,7 +212,7 @@ class Grammar {
         const closure = [];
         for (const item of lrItems) {
             const parsedItem = alreadyParsed ? item : this.parseLRItem(item);
-            if (parsedItem === false) continue;
+            if (parsedItem === false || parsedItem === undefined) continue;
             if (this.lr === 1) {
                 for (const ahead of parsedItem.lookahead) {
                     workQueue.push({
