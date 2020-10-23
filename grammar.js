@@ -4,9 +4,10 @@
 
 const DOT = '•';
 const ARROW = '➜';
-const EPSILON = 'Ɛ' //TODO handle epsilon transitions?
+const EPSILON = 'Ɛ'; //TODO handle epsilon transitions?
 const DELIMITER = '|';
-const START_NON_TERMINAL = "S'"
+const DOLLAR = '$';
+const START_NON_TERMINAL = "S'";
 const NOT_ALLOWED_TERMINALS = [DOT, ARROW, EPSILON, START_NON_TERMINAL, '->', '.', '{', '}', ','];
 
 class Grammar {
@@ -50,7 +51,6 @@ class Grammar {
         this.plainProductionsShort = this.plainProductions.map(v => v.replaceAll(' ', ''))
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
     }
-
 
     //------------parsing-------------
     addInputRow(row) {
@@ -107,6 +107,14 @@ class Grammar {
 
     error() {
         return this._errors.length !== 0;
+    }
+
+    getStartLRItemText() {
+        let prodString = this.startProduction.left + ARROW + DOT + this.startProduction.right.join(" ");
+        if (this.lr === 1) {
+            prodString += " {" + DOLLAR + "}";
+        }
+        return prodString;
     }
 
     parseLRItem(itemText) {

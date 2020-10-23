@@ -5,7 +5,9 @@ function checkGraph() {
     const lrCheck = checkCorrectLrItems(graph);
     const closureCheck = checkCorrectClosure(graph);
     const transitionCheck = checkTransitions(graph);
-    console.log(transitionCheck);
+    const finalCheck = checkFinalStates(graph);
+    const correctStart = checkStartState(graph);
+    console.log(finalCheck);
 
     //highlight errors:
     for (const cell of lrCheck.incorrect.concat(closureCheck.incorrect).concat(transitionCheck.incorrect)) {
@@ -18,19 +20,25 @@ function checkGraph() {
         errorHighlight.highlight(graph.view.getState(cell));
         errorHighlights.push(errorHighlight);
     }
+    const startHighlight = new mxCellHighlight(graph, correctStart ? 'green' : 'red', 1);
+    const cell = graph.startIndicatorSource.edges[0];
+    startHighlight.highlight(graph.view.getState(cell));
+    errorHighlights.push(startHighlight);
+
 }
 
+/*  */
 function hideErrors() {
     for (h of errorHighlights) {
         h.destroy();
     }
 }
 
+/**
+ * Checks if each LR Item in the graph is correctly formatted
+ * @return all LRItems which are incorrect formatted
+ */
 function checkCorrectLrItems(graph) {
-    /**
-     * Checks if each LR Item in the graph is correctly formatted
-     * @return all LRItems which are incorrect formatted
-     */
     const incorrect = [];
     const correct = [];
     for (const cell of Object.values(graph.getModel().cells)) {
@@ -43,10 +51,10 @@ function checkCorrectLrItems(graph) {
     return {incorrect, correct};
 }
 
+/**
+ * Checks for each state if the closure of LR Items is correct
+ */
 function checkCorrectClosure(graph) {
-    /**
-     * Checks for each state if the closure of LR Items is correct
-     */
     const incorrect = [];
     const correct = [];
     for (const cell of Object.values(graph.getModel().cells)) {
@@ -147,4 +155,45 @@ function checkTransitions(graph) {
     return {incorrect, correct, stateIncorrectTransitions};
 }
 
-//TODO check start and final states
+/**
+ * checks if the start state has the start production
+ * @return boolean, whether the start state is correct
+ */
+function checkStartState(graph) {
+    const startState = graph.startState
+    const startLRItem = graph.grammar.parseLRItem(graph.grammar.getStartLRItemText());
+
+    for (const lrItem of startState.children) {
+        if (lrItem.getType() !== STYLE_LR_ITEM) continue;
+        const parsed = graph.grammar.parseLRItem(lrItem.value);
+        if (deepEqual(parsed, startLRItem)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function checkFinalStates(graph) {
+    const incorrect = [];
+    const correct = [];
+    for (const cell of Object.values(graph.getModel().cells)) {
+        if (cell.getType() !== STYLE_STATE) continue;
+
+        const final = cell.isFinal();
+        let graphFinal = false;
+        for (const lrItem of cell.children) {
+            if (lrItem.getType() !== STYLE_LR_ITEM) continue;
+            const parsedItem = graph.grammar.parseLRItem(lrItem.value);
+            if (parsedItem.right2.length === 0) {
+                graphFinal = true;
+                break;
+            }
+        }
+        if (final !== graphFinal) incorrect.push(cell);
+        else correct.push(cell)
+    }
+    return {incorrect, correct}
+}
+
+//TODO check dangling states (graph connected)
+//TODO check duplicate states

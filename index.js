@@ -17,7 +17,7 @@ document.write('<script src="grammar.js"></script>')
 document.write('<script src="checkGraph.js"></script>')
 document.write('<script src="utils.js"></script>')
 
-//add protoype function for cell to get the type (state, LR-Item) of the cell
+//add prototype function for cell to get the type (state, LR-Item) of the cell
 mxCell.prototype.getType = function () {
     const style = this.getStyle()
     if (!style) {
@@ -34,6 +34,10 @@ mxCell.prototype.getType = function () {
         return STYLE_HOVER_ITEM;
     }
     return '';
+}
+mxCell.prototype.isFinal = function () {
+    const style = this.getStyle();
+    return style.includes(STYLE_FINAL_STATE);
 }
 
 let graph = new mxGraph();
@@ -101,7 +105,7 @@ function setStylsheet(graph) {
     let hitem_style = stylesheet.createDefaultVertexStyle();
     stylesheet.putCellStyle(STYLE_HOVER, hover_style);
     stylesheet.putCellStyle(STYLE_HOVER_ITEM, hitem_style);
-    //backgroun
+    //background
     hover_style[mxConstants.STYLE_MOVABLE] = 0;
     hover_style[mxConstants.STYLE_FILLCOLOR] = '#e9e9e9';
     hover_style[mxConstants.STYLE_ROUNDED] = 1;
@@ -164,9 +168,7 @@ function addStartState(graph) {
         const node = null;
         const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
         // Add LR ITem
-        const prod = graph.grammar.startProduction;
-        const prodString = prod.left + ARROW + DOT + prod.right.join(" ");
-        graph.insertVertex(startState, null, prodString, 5, 5, 40, 20, STYLE_LR_ITEM);
+        graph.insertVertex(startState, null, graph.grammar.getStartLRItemText(), 5, 5, 40, 20, STYLE_LR_ITEM);
 
         // set start state and add startIndicator edge
         setStartStateIntern(graph, startState);
