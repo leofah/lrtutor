@@ -7,7 +7,8 @@ function checkGraph() {
     const transitionCheck = checkTransitions(graph);
     const finalCheck = checkFinalStates(graph);
     const correctStart = checkStartState(graph);
-    console.log(finalCheck);
+    const connected = checkConnected(graph);
+    console.log(connected);
 
     //highlight errors:
     for (const cell of lrCheck.incorrect.concat(closureCheck.incorrect).concat(transitionCheck.incorrect)) {
@@ -184,7 +185,7 @@ function checkFinalStates(graph) {
         for (const lrItem of cell.children) {
             if (lrItem.getType() !== STYLE_LR_ITEM) continue;
             const parsedItem = graph.grammar.parseLRItem(lrItem.value);
-            if (parsedItem.right2.length === 0) {
+            if (parsedItem !== false && parsedItem.right2.length === 0) {
                 graphFinal = true;
                 break;
             }
@@ -196,4 +197,30 @@ function checkFinalStates(graph) {
 }
 
 //TODO check dangling states (graph connected)
+function checkConnected(graph) {
+
+    const workQueue = [graph.startState];
+    const connectedStates = [];
+
+    //DFS on the graph
+    while (workQueue.length > 0) {
+        const current = workQueue.pop();
+        if (!connectedStates.includes(current)) {
+            connectedStates.push(current);
+            for (const edge of current.edges) {
+                workQueue.push(edge.getTerminal(false));
+            }
+        }
+    }
+
+    const incorrect = [];
+    const correct = [];
+    for (const cell of Object.values(graph.getModel().cells)) {
+        if (cell.getType() !== STYLE_STATE) continue;
+        if (connectedStates.includes(cell)) correct.push(cell);
+        else incorrect.push(cell);
+    }
+    return {incorrect, correct};
+}
+
 //TODO check duplicate states
