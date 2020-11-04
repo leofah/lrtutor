@@ -31,6 +31,10 @@ class Grammar {
         this._someTerminal = [];
         this._errors = [];
 
+        //first1sets
+        this.canBeEmpty = {};
+        this.first1Set = {};
+
         const split = grammar.split('\n');
         for (const row of split) {
             this.addInputRow(row)
@@ -50,6 +54,9 @@ class Grammar {
         this.plain = this.plainProductions.join('\n');
         this.plainProductionsShort = this.plainProductions.map(v => v.replaceAll(' ', ''))
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
+
+        this.computeEmpty();
+        this.computeFirst1();
     }
 
     //------------parsing-------------
@@ -208,7 +215,7 @@ class Grammar {
         return {left, right1, right2};
     }
 
-    computeEpsilonClosure(lrItems, alreadyParsed=false) {
+    computeEpsilonClosure(lrItems, alreadyParsed = false) {
         /**
          * Computes the Epsilon Closure of given LR Items
          * LRItems: [A->a.b, B->.A]
@@ -270,14 +277,72 @@ class Grammar {
     shiftLrItem(parsedItem) {
         if (parsedItem.right2.length === 0) return;
         const shiftTerm = parsedItem.right2[0];
-        const item =  {
+        const item = {
             'left': parsedItem.left,
             'right1': parsedItem.right1.concat([shiftTerm]),
-            'right2': parsedItem.right2.slice(1, -1),
+            'right2': parsedItem.right2.slice(1, parsedItem.right2.length),
         }
         if (this.lr === 1) {
             item['lookahead'] = parsedItem.lookahead;
         }
         return [item, shiftTerm];
     }
+
+    /**Compute Empty value for each symbol*/
+    computeEmpty() {
+        for (const terminal of this.terminals) this.canBeEmpty[terminal] = false;
+        for (const nonTerminal of this.nonTerminals) this.canBeEmpty[nonTerminal] = false;
+        this.canBeEmpty[START_NON_TERMINAL] = false;
+
+        let changed = true;
+        while (changed) {
+            changed = false;
+            for (const prod of this.productions) {
+                let empty = true;
+                for (const symb of prod.right) {
+                    const emptySymbol = this.canBeEmpty[symb];
+                    if (!emptySymbol) {
+                        empty = false;
+                        break
+                    }
+                }
+                if (empty && this.canBeEmpty[prod.left] !== true) {
+                    this.canBeEmpty[prod.left] = true;
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    /**Compute all first1 sets for the symbols */
+    computeFirst1() {
+        for (const terminal of this.terminals) this.first1Set[terminal] = [terminal]
+        for (const nonTerminal of this.nonTerminals) this.first1Set[nonTerminal] = []
+        this.first1Set[START_NON_TERMINAL] = [];
+
+        let changed = true;
+        while (changed) {
+            changed = false;
+            for (const prod of this.productions) {
+                const oldSet = this.first1Set[prod.left];
+                let newElements = [];
+                for (const symb of prod.right) {
+                    newElements = newElements.concat(this.first1Set[symb]);
+                    if (!this.canBeEmpty[symb]) break;
+                }
+                for (const n of newElements) {
+                    if (oldSet.includes(n)) continue;
+                    changed = true;
+                    this.first1Set[prod.left].push(n);
+                }
+            }
+        }
+    }
+
+    first1(symbol) {
+        const set = this.first1Set[symbol];
+        if (this.canBeEmpty[symbol] && !this.terminals.includes(symbol)) set.push(EPSILON);
+        return set;
+    }
+
 }

@@ -196,7 +196,6 @@ function checkFinalStates(graph) {
     return {incorrect, correct}
 }
 
-//TODO check dangling states (graph connected)
 function checkConnected(graph) {
 
     const workQueue = [graph.startState];
