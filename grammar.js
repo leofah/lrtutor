@@ -157,7 +157,10 @@ class Grammar {
             const set = setString.split(',');
             for (const terminal of set) {
                 if (terminal === EPSILON) continue; //Epsilon Lookahead allowed TODO epsilon lookahead, empty lookahead
-                if (!this.terminals.includes(terminal)) return false;
+                if (terminal === DOLLAR) continue;
+                if (!this.terminals.includes(terminal)) {
+                }
+                return false;
             }
             lookahead = set;
         }
@@ -228,48 +231,54 @@ class Grammar {
         for (const item of lrItems) {
             const parsedItem = alreadyParsed ? item : this.parseLRItem(item);
             if (parsedItem === false || parsedItem === undefined) continue;
-            if (this.lr === 1) {
-                for (const ahead of parsedItem.lookahead) {
-                    workQueue.push({
-                        'left': parsedItem.left,
-                        'right1': parsedItem.right1,
-                        'right2': parsedItem.right2,
-                        'ahead': ahead
-                    });
-                }
-            } else {
-                workQueue.push(parsedItem);
-            }
+            workQueue.push(parsedItem);
         }
 
         while (workQueue.length !== 0) {
             const current = workQueue.pop()
             // if (closure.includes(current)) // does not work cause strict equality is needed
-            if (arrayIncludes(closure, current))
-                continue;
+            if (arrayIncludes(closure, current)) continue;
             closure.push(current);
             workQueue = workQueue.concat(this.getNextEpsilonLRItems(current));
         }
-        // TODO reduce LR1 items again
         return closure;
     }
 
     getNextEpsilonLRItems(parsedItem) {
-        //TODO handle LR1 items correct
         //TODO handle Epsilon transitions A->.e
 
         const NonTerminal = parsedItem.right2[0];
         const result = []
 
         for (const prod of this.productions) {
-            if (prod.left !== NonTerminal)
-                continue;
-            //TODO lookahead set
-            result.push({
-                'left': prod.left,
-                'right1': [],
-                'right2': prod.right,
-            })
+            if (prod.left !== NonTerminal) continue;
+            if (this.lr === 1) {
+                //compute new lookahead set
+                let newLookahead = [];
+                const rightSide = parsedItem.right2.slice(1, parsedItem.right2.length);
+                while (rightSide.length > 0) {
+                    const symb = rightSide.shift();
+                    const first1 = this.first1(symb);
+                    newLookahead = newLookahead.concat(first1);
+                    if (!this.canBeEmpty[symb]) break;
+                    if (rightSide.length === 0)
+                        newLookahead = newLookahead.concat(parsedItem.lookahead)
+                }
+                newLookahead = Array.from(new Set(newLookahead)) // filter duplicates
+
+                result.push({
+                    'left': prod.left,
+                    'right1': [],
+                    'right2': prod.right,
+                    'lookahead': newLookahead,
+                });
+            } else {
+                result.push({
+                    'left': prod.left,
+                    'right1': [],
+                    'right2': prod.right,
+                });
+            }
         }
         return result;
     }
