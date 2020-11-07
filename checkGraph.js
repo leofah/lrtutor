@@ -8,6 +8,7 @@ function checkGraph() {
     const finalCheck = checkFinalStates(graph);
     const correctStart = checkStartState(graph);
     const connected = checkConnected(graph);
+    const duplicates = checkDuplicateStated(graph);
     console.log(connected);
 
     //highlight errors:
@@ -222,4 +223,25 @@ function checkConnected(graph) {
     return {incorrect, correct};
 }
 
-//TODO check duplicate states
+function checkDuplicateStated(graph) {
+    const duplicates = [];
+    const presentStates = {}; //stores present states as key. The value is the cell id
+    for (const cell of Object.values(graph.getModel().cells)) {
+        if (cell.getType() !== STYLE_STATE) continue;
+
+        const lrItems = [];
+        for (const lrItem of cell.children) {
+            if (lrItem.getType() !== STYLE_LR_ITEM) continue;
+            const parsedItem = graph.grammar.parseLRItem(lrItem.value);
+            lrItems.push(graph.grammar.itemToText(parsedItem));
+        }
+
+        lrItems.sort();
+        if (presentStates[lrItems]) {
+            duplicates.push([presentStates[lrItems], cell.id]);
+        } else {
+            presentStates[lrItems] = cell.id;
+        }
+    }
+    return duplicates;
+}

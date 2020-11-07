@@ -218,6 +218,15 @@ class Grammar {
         return {left, right1, right2};
     }
 
+    itemToText(item) {
+        let asArray = [item.left, ARROW, ...item.right1, DOT, ...item.right2];
+        if (this.lr === 1)     {
+            const lookahead = item.lookahead.join(', ');
+            asArray.push('{' + lookahead + '}');
+        }
+        return asArray.join(' ');
+    }
+
     computeEpsilonClosure(lrItems, alreadyParsed = false) {
         /**
          * Computes the Epsilon Closure of given LR Items
