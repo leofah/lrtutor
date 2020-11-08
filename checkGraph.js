@@ -9,7 +9,6 @@ function checkGraph() {
     const correctStart = checkStartState(graph);
     const connected = checkConnected(graph);
     const duplicates = checkDuplicateStated(graph);
-    console.log(connected);
 
     //highlight errors:
     for (const cell of lrCheck.incorrect.concat(closureCheck.incorrect).concat(transitionCheck.incorrect)) {
@@ -233,7 +232,8 @@ function checkDuplicateStated(graph) {
         for (const lrItem of cell.children) {
             if (lrItem.getType() !== STYLE_LR_ITEM) continue;
             const parsedItem = graph.grammar.parseLRItem(lrItem.value);
-            lrItems.push(graph.grammar.itemToText(parsedItem));
+            if (parsedItem)
+                lrItems.push(graph.grammar.itemToText(parsedItem));
         }
 
         lrItems.sort();

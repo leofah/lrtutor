@@ -331,7 +331,7 @@ function deSerializeGraph(serial) {
 
         //add grammar
         const grammarNode = doc.getElementsByTagName('Grammar')[0];
-        const grammar = new Grammar(grammarNode.getAttribute('plain'), grammarNode.getAttribute('lr'));
+        const grammar = new Grammar(grammarNode.getAttribute('plain'), parseInt(grammarNode.getAttribute('lr')));
         changeGrammarDOM(grammar);
         if (grammar.error())
             return;

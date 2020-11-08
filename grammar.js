@@ -133,7 +133,7 @@ class Grammar {
          @return {left, right1, right2, lookahead} if everything is alright, else 'false'
          */
 
-        if (this.lrItemMap[itemText]) {
+        if (this.lrItemMap[itemText] !== undefined) {
             return this.lrItemMap[itemText];
         }
         const result = this.parseLRItemHelp(itemText);
@@ -158,11 +158,9 @@ class Grammar {
             for (const terminal of set) {
                 if (terminal === EPSILON) continue; //Epsilon Lookahead allowed TODO epsilon lookahead, empty lookahead
                 if (terminal === DOLLAR) continue;
-                if (!this.terminals.includes(terminal)) {
-                }
-                return false;
+                if (!this.terminals.includes(terminal)) return false;
             }
-            lookahead = set;
+            lookahead = set.sort();
         }
 
         //retrieve Variables
@@ -220,7 +218,7 @@ class Grammar {
 
     itemToText(item) {
         let asArray = [item.left, ARROW, ...item.right1, DOT, ...item.right2];
-        if (this.lr === 1)     {
+        if (item.lookahead) {
             const lookahead = item.lookahead.join(', ');
             asArray.push('{' + lookahead + '}');
         }
@@ -234,9 +232,8 @@ class Grammar {
          * @return list of LRItem texts which are in the closure of the given LR ITems
          */
 
-            //TODO expand LR1 Items a->.b {1,2} => a->.b {1}, a->.b {2}
         let workQueue = [];
-        const closure = [];
+        let closure = [];
         for (const item of lrItems) {
             const parsedItem = alreadyParsed ? item : this.parseLRItem(item);
             if (parsedItem === false || parsedItem === undefined) continue;
@@ -249,6 +246,30 @@ class Grammar {
             if (arrayIncludes(closure, current)) continue;
             closure.push(current);
             workQueue = workQueue.concat(this.getNextEpsilonLRItems(current));
+        }
+
+        //compact lookahead sets
+        if (this.lr === 1) {
+            const INFO = ".parsed";
+
+            const itemsToSet = {};
+            for (const item of closure) {
+                const text = this.itemToText({'left': item.left, 'right1': item.right1, 'right2': item.right2});
+                if (itemsToSet[text] === undefined) {
+                    itemsToSet[text] = item.lookahead;
+                    itemsToSet[text + INFO] = item;
+                } else {
+                    itemsToSet[text] = itemsToSet[text].concat(item.lookahead);
+                }
+            }
+
+            closure = []
+            for (const itemText in itemsToSet) {
+                if (itemText.endsWith(INFO)) continue;
+                const item = itemsToSet[itemText + INFO];
+                item.lookahead = Array.from(new Set(itemsToSet[itemText])).sort();
+                closure.push(item);
+            }
         }
         return closure;
     }
@@ -265,15 +286,17 @@ class Grammar {
                 //compute new lookahead set
                 let newLookahead = [];
                 const rightSide = parsedItem.right2.slice(1, parsedItem.right2.length);
-                while (rightSide.length > 0) {
+                while (true) {
+                    if (rightSide.length === 0) {
+                        newLookahead = newLookahead.concat(parsedItem.lookahead)
+                        break;
+                    }
                     const symb = rightSide.shift();
                     const first1 = this.first1(symb);
                     newLookahead = newLookahead.concat(first1);
                     if (!this.canBeEmpty[symb]) break;
-                    if (rightSide.length === 0)
-                        newLookahead = newLookahead.concat(parsedItem.lookahead)
                 }
-                newLookahead = Array.from(new Set(newLookahead)) // filter duplicates
+                newLookahead = Array.from(new Set(newLookahead)).sort() // filter duplicates
 
                 result.push({
                     'left': prod.left,
