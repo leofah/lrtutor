@@ -37,7 +37,9 @@ function hideErrors() {
 
 /**
  * Checks if each LR Item in the graph is correctly formatted
- * @return all LRItems which are incorrect formatted
+ * @return {{incorrect: [], correct: []}}
+ *      incorrect: LRItems which are incorrect formatted
+ *      correct: LRItems which are correctly formatted
  */
 function checkCorrectLrItems(graph) {
     const incorrect = [];
@@ -54,6 +56,9 @@ function checkCorrectLrItems(graph) {
 
 /**
  * Checks for each state if the closure of LR Items is correct
+ * @return {{incorrect: [], correct: []}}
+ *      incorrect: states where the closure is not correct
+ *      correct: the closure of the LRItems in the state is the same as all LRItems in the state
  */
 function checkCorrectClosure(graph) {
     const incorrect = [];
@@ -66,12 +71,12 @@ function checkCorrectClosure(graph) {
             if (lrItem.getType() !== STYLE_LR_ITEM) continue;
 
             if (graph.grammar.parseLRItem(lrItem.value) !== false)
-                lrItems.push((lrItem.value))
+                lrItems.push(graph.grammar.parseLRItem(lrItem.value))
         }
 
         const closure = graph.grammar.computeEpsilonClosure(lrItems);
 
-        if (isSetsEqual(closure, lrItems.map(item => graph.grammar.parseLRItem(item))))
+        if (isSetsEqual(closure, lrItems))
             correct.push(cell);
         else {
             incorrect.push(cell);
@@ -81,6 +86,18 @@ function checkCorrectClosure(graph) {
     return {incorrect, correct}
 }
 
+/**
+ * check if all states of the graph have all needed transitions.
+ * If a transition is present, check if the target state has exactly the correct lr-items.
+ * The closure of the target must be correct and no additional LRItems should be present in the target
+ * @param graph
+ * @return {{incorrect: [], correct: [], stateIncorrectTransitions: Map<state.id, {extraTransitions, missingTransitions}>}}
+ *      incorrect: Edges which lead to an incorrect state
+ *      correct: Edges which lead to a correct state
+ *      stateIncorrectTransitions: Map state.id ->
+ *          extraTransitions: edges, which are not needed in this state
+ *          missingTransitions: list of terminals, which need a transition in this state (e.G. 'e', if S -> .e is an LRItem in this state)
+ */
 function checkTransitions(graph) {
     const incorrect = [];
     const correct = [];
@@ -132,7 +149,7 @@ function checkTransitions(graph) {
             const targetState = graph.getModel().getCell(targetID);
             const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
 
-            const closure = graph.grammar.computeEpsilonClosure(shiftedItem, true)
+            const closure = graph.grammar.computeEpsilonClosure(shiftedItem)
 
             const lrItems = [];
             for (const lrItem of targetState.children) {
@@ -196,8 +213,14 @@ function checkFinalStates(graph) {
     return {incorrect, correct}
 }
 
+/**
+ * checks if all states are connected to the start state with an incoming transition
+ * @param graph
+ * @return {{incorrect: [], correct: []}}
+ *          incorrect: states, which are not connected,
+ *          correct: states which are connected to the start state
+ */
 function checkConnected(graph) {
-
     const workQueue = [graph.startState];
     const connectedStates = [];
 
@@ -221,6 +244,15 @@ function checkConnected(graph) {
     }
     return {incorrect, correct};
 }
+
+/**
+ * check if there are duplicate states with the same LRItems in the graph. This is not false for the canonical automatan,
+ * however it is not the smallest possible graph and a nice feature to see irrelevant states
+ * @param graph
+ * @return {[]} List of Tuples: [cell1_id, cell2_id] where cell1 and cell2 are duplicate. cell1 only appearing on index 0,
+ *  every duplicate cell2 of cell1 gets one entry in the list. If further cell3 ist the same, no entry [cell2_id, cell3_id] will exist,
+ *  but the entry [cell1_id, cell3_id]
+ */
 
 function checkDuplicateStated(graph) {
     const duplicates = [];

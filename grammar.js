@@ -4,7 +4,7 @@
 
 const DOT = '•';
 const ARROW = '➜';
-const EPSILON = 'Ɛ'; //TODO handle epsilon transitions?
+const EPSILON = 'Ɛ';
 const DELIMITER = '|';
 const DOLLAR = '$';
 const START_NON_TERMINAL = "S'";
@@ -24,7 +24,6 @@ class Grammar {
         this.terminals = [];
         this.nonTerminals = [];
         this.productions = [];
-        this.plainProductions = [];
         this.lrItemMap = {};
 
         // parse helper
@@ -45,18 +44,26 @@ class Grammar {
         this.startProduction = this.productions.filter(v => v.left === START_NON_TERMINAL)[0];
         if (!this.startProduction) {
             if (this.productions.length === 0)
-                this._errors.push("Not enough production to make a reasonable exercise");
-            else
-                this.startProduction = this.addProduction(START_NON_TERMINAL, [this.productions[0].left]);
+                this._errors.push("Not enough production to set a start production");
+            else {
+                this.startProduction = {'left': START_NON_TERMINAL, 'right': [this.productions[0].left]};
+                this.productions.push(this.startProduction);
+            }
         }
 
         //set object variables
-        this.plain = this.plainProductions.join('\n');
-        this.plainProductionsShort = this.plainProductions.map(v => v.replaceAll(' ', ''))
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
 
         this.computeEmpty();
         this.computeFirst1();
+    }
+
+    toString() {
+        const plainProductions = [];
+        for (const prod of this.productions) {
+            plainProductions.push(prod.left + ARROW + (prod.right.length === 0 ? EPSILON : prod.right.join(" ")));
+        }
+        return plainProductions.join('\n');
     }
 
     //------------parsing-------------
@@ -83,7 +90,7 @@ class Grammar {
             const rightSplit = prod.split(" ");
 
             for (let someTerminal of rightSplit) {
-                if (someTerminal === "")
+                if (someTerminal === "" || someTerminal === EPSILON)
                     continue;
 
                 someTerminal = someTerminal.trim();
@@ -96,20 +103,8 @@ class Grammar {
                         this._errors.push("Terminal '" + someTerminal + "' is not allowed");
                     }
             }
-            this.addProduction(left, right);
+            this.productions.push({left, right});
         }
-    }
-
-    addProduction(left, right) {
-        if (right.length === 0)
-            right = [EPSILON];
-
-        const prod = left + ARROW + right.join(" ");
-        this.plainProductions.push(prod);
-
-        const prodObject = {left, right};
-        this.productions.push(prodObject);
-        return prodObject;
     }
 
     error() {
@@ -156,7 +151,6 @@ class Grammar {
             const setString = split[1].replace('}', '');
             const set = setString.split(',');
             for (const terminal of set) {
-                if (terminal === EPSILON) continue; //Epsilon Lookahead allowed TODO epsilon lookahead, empty lookahead
                 if (terminal === DOLLAR) continue;
                 if (!this.terminals.includes(terminal)) return false;
             }
@@ -205,9 +199,7 @@ class Grammar {
                     break;
                 }
             }
-        }
-        if (!right1 && !right2) {
-            return false;
+            if (!right1 && !right2) return false;
         }
 
         //return result
@@ -225,7 +217,7 @@ class Grammar {
         return asArray.join(' ');
     }
 
-    computeEpsilonClosure(lrItems, alreadyParsed = false) {
+    computeEpsilonClosure(lrItems) {
         /**
          * Computes the Epsilon Closure of given LR Items
          * LRItems: [A->a.b, B->.A]
@@ -234,8 +226,7 @@ class Grammar {
 
         let workQueue = [];
         let closure = [];
-        for (const item of lrItems) {
-            const parsedItem = alreadyParsed ? item : this.parseLRItem(item);
+        for (const parsedItem of lrItems) {
             if (parsedItem === false || parsedItem === undefined) continue;
             workQueue.push(parsedItem);
         }
@@ -275,8 +266,6 @@ class Grammar {
     }
 
     getNextEpsilonLRItems(parsedItem) {
-        //TODO handle Epsilon transitions A->.e
-
         const NonTerminal = parsedItem.right2[0];
         const result = []
 
@@ -292,7 +281,7 @@ class Grammar {
                         break;
                     }
                     const symb = rightSide.shift();
-                    const first1 = this.first1(symb);
+                    const first1 = this.first1Set[symb];
                     newLookahead = newLookahead.concat(first1);
                     if (!this.canBeEmpty[symb]) break;
                 }
@@ -371,19 +360,12 @@ class Grammar {
                     newElements = newElements.concat(this.first1Set[symb]);
                     if (!this.canBeEmpty[symb]) break;
                 }
-                for (const n of newElements) {
-                    if (oldSet.includes(n)) continue;
+                for (const elem of newElements) {
+                    if (oldSet.includes(elem)) continue;
+                    this.first1Set[prod.left].push(elem);
                     changed = true;
-                    this.first1Set[prod.left].push(n);
                 }
             }
         }
     }
-
-    first1(symbol) {
-        const set = this.first1Set[symbol];
-        if (this.canBeEmpty[symbol] && !this.terminals.includes(symbol)) set.push(EPSILON);
-        return set;
-    }
-
 }

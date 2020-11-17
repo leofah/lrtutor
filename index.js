@@ -307,7 +307,7 @@ function serializeGraph(graph) {
     //save grammar
     const grammarNode = rootXml.createElement('Grammar');
     grammarNode.setAttribute('lr', graph.grammar.lr);
-    grammarNode.setAttribute('plain', graph.grammar.plain);
+    grammarNode.setAttribute('plain', graph.grammar);
     rootElem.appendChild(grammarNode);
 
     //save start state
@@ -349,8 +349,6 @@ function deSerializeGraph(serial) {
         graph.startState = graph.getModel().cells[startID];
         const startSourceID = graphNode.getAttribute('startSource');
         graph.startIndicatorSource = graph.getModel().cells[startSourceID];
-
-        //TODO start StaTe Indicator
 
     } catch (e) {
         return "Invalid File Format: " + e;
@@ -442,7 +440,7 @@ function changeGrammarDOM(grammar) {
 
         pre.appendChild(document.createTextNode(grammar._errors.join('\n')));
     } else {
-        pre.appendChild(document.createTextNode(grammar.plain));
+        pre.appendChild(document.createTextNode(grammar));
     }
     nodeGrammar.appendChild(pre);
 
