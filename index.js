@@ -138,6 +138,36 @@ function addListeners(graph) {
             }
         }
     });
+    graph.getSelectionModel().addListener(mxEvent.CHANGE, (_, evt) => {
+        //visibility of the action commands on the graph like toggle final state or delete state
+        const selectedCells = graph.getSelectionCells();
+        let nrEdges = 0;
+        let nrStates = 0;
+        for (const cell of selectedCells) {
+            if (cell.getType() === STYLE_STATE) nrStates++;
+            if (cell.getType() === STYLE_EDGE) nrEdges++;
+        }
+        const gAction = document.getElementById("graphActions");
+        const aDelete = document.getElementById("actionDelete");
+        const aToggle = document.getElementById("actionToggleFinal");
+        const aSetStart = document.getElementById("actionSetStart");
+
+        console.log("State: " + nrStates + ", Edges: " + nrEdges + ", Sum: " + (nrStates + nrEdges))
+
+        if (nrStates + nrEdges > 0) {
+            gAction.classList.remove("d-none");
+            aDelete.classList.remove("d-none");
+        } else {
+            gAction.classList.add("d-none")
+            aDelete.classList.add("d-none");
+        }
+        if (nrStates > 0) aToggle.classList.remove("d-none");
+        else aToggle.classList.add("d-none");
+
+        if (nrStates === 1) aSetStart.classList.remove("d-none");
+        else aSetStart.classList.add("d-none");
+
+    });
 }
 
 // ---------------- stuff ------------------------
@@ -204,7 +234,7 @@ function redrawStartIndicator(graph) {
  * toggles the final state attribute on the selected States
  */
 function toggleFinalStates() {
-    const selection = graph.getSelectionModel().cells;
+    const selection = graph.getSelectionCells()
     for (const cell of selection) {
         if (cell.getType() === STYLE_STATE) {
             if (cell.getStyle() === STYLE_FINAL_STATE) {
@@ -221,7 +251,7 @@ function toggleFinalStates() {
  * connected edges are deleted as well
  */
 function deletedStates() {
-    const selection = graph.getSelectionModel().cells;
+    const selection = graph.getSelectionCells()
     graph.getModel().beginUpdate();
     try {
         for (const cell of selection) {
@@ -240,7 +270,7 @@ function deletedStates() {
  * sets the selected state to the start State if only one state is selected
  */
 function setStartState() {
-    const selection = graph.getSelectionModel().cells;
+    const selection = graph.getSelectionCells()
     graph.getModel().beginUpdate();
     try {
         let newStartState = null;
@@ -421,29 +451,24 @@ function setGrammar(plainGrammar, lr0) {
 }
 
 function changeGrammarDOM(grammar) {
-    const nodeGrammar = document.createElement('div');
+    const grammarTextElement = document.getElementById("grammarText");
+    const grammarErrorElement = document.getElementById("grammarError");
 
-    const h3 = document.createElement('h3');
-    h3.appendChild(document.createTextNode("Grammar"));
-    nodeGrammar.appendChild(h3);
+    //Set default state
+    while (grammarTextElement.hasChildNodes()) grammarTextElement.removeChild(grammarTextElement.firstChild);
+    while (grammarErrorElement.hasChildNodes()) grammarErrorElement.removeChild(grammarErrorElement.firstChild);
+    grammarErrorElement.classList.add("d-none")
 
-    const lr = document.createElement('p');
-    lr.appendChild(document.createTextNode("LR" + grammar.lr));
-    nodeGrammar.appendChild(lr);
-
-    const pre = document.createElement('pre');
-    pre.setAttribute('id', 'grammar');
+    //input new grammar information
     if (grammar.error()) {
-        const p = document.createElement('p');
-        p.appendChild(document.createTextNode("Error in Grammar Definition:"));
-        nodeGrammar.appendChild(p);
+        grammarErrorElement.appendChild(document.createTextNode("Errors In the Grammar definition:\n"));
+        grammarErrorElement.appendChild(document.createTextNode(grammar._errors.join('\n')));
 
-        pre.appendChild(document.createTextNode(grammar._errors.join('\n')));
+        grammarErrorElement.classList.remove("d-none")
     } else {
-        pre.appendChild(document.createTextNode(grammar));
-    }
-    nodeGrammar.appendChild(pre);
+        grammarTextElement.appendChild(document.createTextNode(grammar));
 
-    const node = document.getElementById('div-grammar');
-    node.replaceChild(nodeGrammar, node.getElementsByTagName('div')[0],);
+        document.getElementById("grammarPresent").classList.remove("d-none")
+        document.getElementById("grammarInput").classList.add("d-none");
+    }
 }

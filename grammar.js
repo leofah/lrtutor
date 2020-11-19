@@ -119,15 +119,14 @@ class Grammar {
         return prodString;
     }
 
+    /**parses the content of an lr item in the graph and returns the relevant parts.
+     * The Lookahead set is only returned if this is an LR1 Grammar
+     * this is the lrItems format with arbitrary many spaces: left -> right1 . right2 { lookahead }
+     * If no production can be matched 'false' is returned
+     * right1, right2 and lookahead are arrays
+     @return {left, right1, right2, lookahead} if everything is alright, else 'false'
+     */
     parseLRItem(itemText) {
-        /**parses the content of an lr item in the graph and returns the relevant parts.
-         * The Lookahead set is only returned if this is an LR1 Grammar
-         * this is the lrItems format with arbitrary many spaces: left -> right1 . right2 { lookahead }
-         * If no production can be matched 'false' is returned
-         * right1, right2 and lookahead are arrays
-         @return {left, right1, right2, lookahead} if everything is alright, else 'false'
-         */
-
         if (this.lrItemMap[itemText] !== undefined) {
             return this.lrItemMap[itemText];
         }
@@ -217,13 +216,12 @@ class Grammar {
         return asArray.join(' ');
     }
 
+    /**
+     * Computes the Epsilon Closure of given LR Items
+     * LRItems: [A->a.b, B->.A]
+     * @return list of LRItem texts which are in the closure of the given LR ITems
+     */
     computeEpsilonClosure(lrItems) {
-        /**
-         * Computes the Epsilon Closure of given LR Items
-         * LRItems: [A->a.b, B->.A]
-         * @return list of LRItem texts which are in the closure of the given LR ITems
-         */
-
         let workQueue = [];
         let closure = [];
         for (const parsedItem of lrItems) {

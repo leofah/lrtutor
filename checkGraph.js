@@ -184,6 +184,10 @@ function checkStartState(graph) {
     for (const lrItem of startState.children) {
         if (lrItem.getType() !== STYLE_LR_ITEM) continue;
         const parsed = graph.grammar.parseLRItem(lrItem.value);
+        if (graph.grammar.lr === 1) {
+            if (!parsed.lookahead.includes(DOLLAR)) continue;
+            parsed.lookahead = [DOLLAR]; // start LR Item only has DOLLAR in its lookahead
+        }
         if (deepEqual(parsed, startLRItem)) {
             return true;
         }
@@ -191,6 +195,14 @@ function checkStartState(graph) {
     return false;
 }
 
+/**
+ * check if all states have the correct final status.
+ * A state must be final if a LRItem S -> aaa. exists in the state (DOT at the end)
+ * @param graph
+ * @return {{incorrect: [], correct: []}}
+ *      incorrect: states with wrong final status
+ *      correct: states with right final status
+ */
 function checkFinalStates(graph) {
     const incorrect = [];
     const correct = [];
