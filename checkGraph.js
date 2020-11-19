@@ -26,6 +26,77 @@ function checkGraph() {
     startHighlight.highlight(graph.view.getState(cell));
     errorHighlights.push(startHighlight);
 
+    //print errors in HTML
+    let everythingCorrect = true;
+    const errorElement = document.getElementById("graphErrors");
+
+    const CLASSES_ERROR = "alert alert-danger";
+    const CLASSES_WARNING = "alert alert-warning";
+    const CLASSES_CORRECT = "alter alert-success";
+
+
+    if (lrCheck.incorrect.length > 0 || !correctStart || closureCheck.incorrect.length > 0 || transitionCheck.incorrect.length > 0) {
+        everythingCorrect = false;
+        addNode("Please look at the graph to see the errors", errorElement, CLASSES_ERROR)
+    }
+
+    for (const [cellID, errorTransitions] of transitionCheck.stateIncorrectTransitions) {
+        console.log(cellID);
+        console.log(errorTransitions);
+        const extraTransitions = errorTransitions.extraTransitions
+        const missingTransitions =  errorTransitions.missingTransitions
+
+        if (extraTransitions.length > 0) {
+            everythingCorrect = false;
+            let message = "State " + cellID + " has to many outgoing transitions with (non)terminals: " +
+                extraTransitions.join(', ')
+            addNode(message, errorElement, CLASSES_ERROR)
+        }
+        if (missingTransitions.length > 0) {
+            everythingCorrect = false;
+            let message = "State " + cellID + " misses transitions with following (non)terminals: " +
+                missingTransitions.join(', ')
+            addNode(message, errorElement, CLASSES_ERROR)
+        }
+
+    }
+
+    // final states correct
+    if (finalCheck.incorrect.length > 0) {
+        everythingCorrect = false;
+        const message = "Not all states have the correct final status: " +
+            finalCheck.incorrect.map(cell => cell.id).join(', ');
+        addNode(message, errorElement, CLASSES_ERROR)
+    }
+    // graph connected
+    if (connected.incorrect.length > 0) {
+        everythingCorrect = false;
+        const message = "Not all states are connected to the start state: " +
+            connected.incorrect.map(cell => cell.id).join(', ');
+        addNode(message, errorElement, CLASSES_WARNING)
+    }
+    // duplicates
+    if (Object.keys(duplicates).length > 0) {
+        everythingCorrect = false;
+        let message = "There are duplicate states in the graph: ";
+        for (const key in duplicates) {
+            message = message + duplicates[key].join(', ')
+        }
+        addNode(message, errorElement, CLASSES_WARNING)
+    }
+
+    if (everythingCorrect) addNode("Your Graph is correct", errorElement, CLASSES_CORRECT);
+
+    errorElement.classList.remove("d-none")
+    document.getElementById("graphActions").classList.add("d-none");
+
+}
+
+function addNode(message, errorElement, classes) {
+    const div = document.createElement("div");
+    div.setAttribute("class", classes);
+    div.appendChild(document.createTextNode(message));
+    errorElement.appendChild(div);
 }
 
 /*  */
@@ -33,6 +104,10 @@ function hideErrors() {
     for (h of errorHighlights) {
         h.destroy();
     }
+
+    const errorElement = document.getElementById("graphErrors");
+    while (errorElement.childElementCount > 0) errorElement.removeChild(errorElement.firstChild);
+    errorElement.classList.add("d-none");
 }
 
 /**
@@ -167,7 +242,10 @@ function checkTransitions(graph) {
         //filter for extra and missing transitions
         const hasTransitions = cell.edges.filter(e => e.getTerminal(true) === cell).map(e => e.value);
         const extraTransitions = hasTransitions.filter(v => !needsTransitions.has(v));
-        stateIncorrectTransitions.set(cell.id, {extraTransitions, missingTransitions});
+        stateIncorrectTransitions.set(cell.id, {
+            'extraTransitions': extraTransitions,
+            'missingTransitions': Array.from(missingTransitions)
+        });
     }
 
     return {incorrect, correct, stateIncorrectTransitions};
@@ -258,16 +336,14 @@ function checkConnected(graph) {
 }
 
 /**
- * check if there are duplicate states with the same LRItems in the graph. This is not false for the canonical automatan,
+ * check if there are duplicate states with the same LRItems in the graph. This is not false for the canonical automaton,
  * however it is not the smallest possible graph and a nice feature to see irrelevant states
  * @param graph
- * @return {[]} List of Tuples: [cell1_id, cell2_id] where cell1 and cell2 are duplicate. cell1 only appearing on index 0,
- *  every duplicate cell2 of cell1 gets one entry in the list. If further cell3 ist the same, no entry [cell2_id, cell3_id] will exist,
- *  but the entry [cell1_id, cell3_id]
+ * @return  map of representative states to set all states, which are a duplicate of the representative
  */
 
 function checkDuplicateStated(graph) {
-    const duplicates = [];
+    const duplicates = {};  //result map: representative -> set of duplicate states
     const presentStates = {}; //stores present states as key. The value is the cell id
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
@@ -281,11 +357,11 @@ function checkDuplicateStated(graph) {
         }
 
         lrItems.sort();
-        if (presentStates[lrItems]) {
-            duplicates.push([presentStates[lrItems], cell.id]);
-        } else {
-            presentStates[lrItems] = cell.id;
-        }
+        const otherCellId = presentStates[lrItems];
+        if (otherCellId === undefined) presentStates[lrItems] = cell.id;
+        else if (duplicates[otherCellId] === undefined) duplicates[otherCellId] = [presentStates[lrItems], cell.id];
+        else duplicates[otherCellId].push(cell.id);
+
     }
     return duplicates;
 }
