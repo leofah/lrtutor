@@ -23,53 +23,100 @@ class editHandler {
             this.cur_edit_cell = null;
             if (cell && cell.getType() === STYLE_LR_ITEM) {
                 //listen only for stopped on LR items
-                this.listenEditStopLRItem(this.graph, cell, evt);
-                evt.consume();
+                this.listenEditStopLRItem(cell, evt);
+                mxEvent.consume(evt);
             }
+        });
+
+        //Double click to start editing the State on click position
+        this.graph.addListener(mxEvent.DOUBLE_CLICK, (_, evt) => {
+            const cell = evt.getProperty('cell');
+            if (!cell || cell.getType() !== STYLE_STATE) return;
+            graph.getSelectionModel().clear();
+            this.editState(cell);
+            mxEvent.consume(evt);
         });
     }
 
-    listenEditStopLRItem(graph, cell, evt) {
-        // lr items escaping and creation
+    //The user stopped editing the lritem cell
+    listenEditStopLRItem(cell, evt) {
+        const state = cell.getParent();
+
+        //set new escaped value
         const value = cell.getValue();
         const newValue = this.checkLRItem(value);
-        if (newValue === "edit here") {
-        // this.graph.getModel().setValue(cell, "Error");
-            return;
-        }
-        if (newValue === "") {
-            //remove empty lr item
-            this.graph.getModel().beginUpdate();
-            try {
-                this.graph.removeCells([cell]);
-            } finally {
-                this.graph.getModel().endUpdate();
-            }
-        } else {
+        this.graph.getModel().beginUpdate();
+        try {
             this.graph.getModel().setValue(cell, newValue);
-            if (!evt.getProperty('cancel')) {
-                //start editing the next lr item in the cell
-                const state = cell.getParent();
-                const index = state.children.indexOf(cell);
-                this.editState(this.graph, state, index + 1);
-            } // canceling stops adding of new LRitems
+            if (newValue === "") {
+                this.graph.removeCells([cell]);
+            }
+        } finally {
+            this.graph.getModel().endUpdate();
+        }
+
+        // if stopped editing in the last cell, create a new LRItem at the end
+        // otherwise the editing is stopped
+        const index = state.children.indexOf(cell);
+        if (index !== -1 && index + 1 === state.getChildCount()) {
+            this.editState(state);
+        } else {
+            this.resizeState(state);
         }
     }
 
-    editState(graph, state, child_index = -1) {
+    resizeState(state) {
+        //remove empty lines in State
+        //resize state height and width
+        this.graph.getModel().beginUpdate();
+        try {
+            let maxItemWidth = STATE_MIN_WIDTH;
+            //move Items to empty spaces
+            for (const i in state.children) {
+                const item = state.getChildAt(i);
+                this.graph.moveCells([item], 0, STATE_MARGIN + i * LRITEM_HEIGHT - item.getGeometry().y)
+                const width = item.getGeometry().width
+                if (width > maxItemWidth) maxItemWidth = width;
+            }
+
+            //resize state
+            const targetWidth = maxItemWidth + 2 * STATE_MARGIN;
+            const targetHeight = state.getChildCount() * LRITEM_HEIGHT + 2 * STATE_MARGIN;
+            const oldGeo = state.getGeometry()
+            const newGeo = oldGeo.clone();
+            if (oldGeo.width !== targetWidth) {
+                newGeo.width = targetWidth;
+            }
+            if (oldGeo.height !== targetHeight) {
+                newGeo.height = targetHeight;
+            }
+            this.graph.getModel().setGeometry(state, newGeo);
+
+            if (this.graph.startState === state) {
+                redrawStartIndicator(this.graph);
+            }
+        } finally {
+            this.graph.getModel().endUpdate();
+        }
+    }
+
+    editState(state, child_index = -1) {
         // edits lr Item on index of state and start editing
         // if index does not exist, new lritem is added
         let item;
-        graph.getModel().beginUpdate();
+        this.graph.getModel().beginUpdate();
         try {
             item = state.getChildAt(child_index);
             if (!item) {
-                item = graph.insertVertex(state, null, "edit here", 5, state.getChildCount() * 20 + 5, 40, 20, STYLE_LR_ITEM);
+                item = this.graph.insertVertex(state, null, "", STATE_MARGIN,
+                    state.getChildCount() * LRITEM_HEIGHT + STATE_MARGIN, 40, LRITEM_HEIGHT, STYLE_LR_ITEM);
+                //redraw start indicator if start state
+                if (this.graph.startState === state) redrawStartIndicator(this.graph);
             }
         } finally {
-            graph.getModel().endUpdate();
+            this.graph.getModel().endUpdate();
         }
-        graph.startEditingAtCell(item);
+        this.graph.startEditingAtCell(item);
     }
 
     checkLRItem(text) {

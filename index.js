@@ -10,12 +10,22 @@ const STYLE_HOVER_ITEM = 'hitem';
 const ATTR_START = 'start';
 const ATTR_FINAL = 'final';
 
+
+const STATE_MARGIN = 10;
+const LRITEM_HEIGHT = 20;
+const STATE_MIN_HEIGHT = 40;
+const STATE_MIN_WIDTH = 60;
+
 //include files (for development)
 document.write('<script src="connectionHandler.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
 document.write('<script src="checkGraph.js"></script>')
 document.write('<script src="utils.js"></script>')
+
+function I(elementID) {
+    return document.getElementById(elementID);
+}
 
 //add prototype function for cell to get the type (state, LR-Item) of the cell
 mxCell.prototype.getType = function () {
@@ -49,19 +59,20 @@ function main() {
         mxUtils.error('Unsupported Browser', 200, false);
     }
     // temporary
-    document.getElementById('grammarTextArea').value = "S'➜E\nE➜E + T |T \nT➜T * F |F \nF➜( E ) |int \n"
+    I('grammarTextArea').value = "S'➜E\nE➜E + T |T \nT➜T * F |F \nF➜( E ) |int \n"
 }
 
 function initGraph(grammar) {
-    const g = new mxGraph(document.getElementById('mxCanvas'), new mxGraphModel());
-    // graph.setEnabled(false);
+    const g = new mxGraph(I('mxCanvas'), new mxGraphModel());
+    // g.setEnabled(false); //move and select does not work
     g.setAllowDanglingEdges(false);
     g.setDisconnectOnMove(false);
     // graph.setConnectable(true); //not needed if custom connectionHandler implemented and activated
     // graph.setAllowLoops(true); //works with the built in mxGraph connection Handler
     g.setEdgeLabelsMovable(false);
-    g.setAutoSizeCells(true); //TODO autosize
+    // g.setAutoSizeCells(true);
     g.setCellsResizable(false);
+    g.setCellsCloneable(false);
     g.foldingEnabled = false;
 
     g.ownConnectionHandler = new connectionHandler(g)
@@ -97,6 +108,7 @@ function setStylsheet(graph) {
     //lritem
     lritem_style[mxConstants.STYLE_MOVABLE] = 0;
     lritem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
+    lritem_style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
 
     //edge
 
@@ -125,21 +137,46 @@ function setStylsheet(graph) {
 
 // ------------- Listener ---------------
 function addListeners(graph) {
+    // example listener
     graph.addListener(null, (_, evt) => {
         //print every event
         // if (evt.name !== "fireMouseEvent")
         //     console.log(evt);
     });
+
+    //add a new State on the Canvas
+    graph.addMouseListener({
+        'mouseUp': function (_, evt) {
+            //evt is a mxMouseEvent not an mxEvent
+            //TODO dont create state if adding edge
+            if (evt.isConsumed()) return
+            if (graph.cellEditor.editingCell) {
+                graph.stopEditing(true);
+                return;
+            }
+            const cell = evt.getCell();
+            if (cell) return;
+            addState(graph, evt.getGraphX(), evt.getGraphY());
+        },
+        //These are needed for a mouse listener
+        'mouseMove': function () {
+        },
+        'mouseDown': function () {
+        },
+    });
+
+    //redraw start indicator
     graph.addListener(mxEvent.CELLS_MOVED, (_, evt) => {
         const cells = evt.getProperty('cells');
         for (const cell of cells) {
             if (cell === graph.startState) {
-                redrawStartIndicator(graph)
+                redrawStartIndicator(graph);
             }
         }
     });
+
+    //visibility of the action commands, like toggle final state or delete state
     graph.getSelectionModel().addListener(mxEvent.CHANGE, (_, evt) => {
-        //visibility of the action commands on the graph like toggle final state or delete state
         const selectedCells = graph.getSelectionCells();
         let nrEdges = 0;
         let nrStates = 0;
@@ -147,19 +184,20 @@ function addListeners(graph) {
             if (cell.getType() === STYLE_STATE) nrStates++;
             if (cell.getType() === STYLE_EDGE) nrEdges++;
         }
-        const gAction = document.getElementById("graphActions");
-        const aDelete = document.getElementById("actionDelete");
-        const aToggle = document.getElementById("actionToggleFinal");
-        const aSetStart = document.getElementById("actionSetStart");
-
-        console.log("State: " + nrStates + ", Edges: " + nrEdges + ", Sum: " + (nrStates + nrEdges))
+        const gAction = I("graphActions");
+        const aDelete = I("actionDelete");
+        const aToggle = I("actionToggleFinal");
+        const aSetStart = I("actionSetStart");
+        const gErrors = I("graphErrors");
 
         if (nrStates + nrEdges > 0) {
             gAction.classList.remove("d-none");
             aDelete.classList.remove("d-none");
+            gErrors.classList.add("d-none");
         } else {
-            gAction.classList.add("d-none")
+            gAction.classList.add("d-none");
             aDelete.classList.add("d-none");
+            gErrors.classList.remove("d-none");
         }
         if (nrStates > 0) aToggle.classList.remove("d-none");
         else aToggle.classList.add("d-none");
@@ -167,6 +205,21 @@ function addListeners(graph) {
         if (nrStates === 1) aSetStart.classList.remove("d-none");
         else aSetStart.classList.add("d-none");
 
+    });
+
+    //keyboard listener
+    document.addEventListener('keydown', evt => {
+        switch (evt.key) {
+            case 'Delete':
+                deletedStates();
+                break;
+            case 'f':
+                toggleFinalStates();
+                break;
+            case 's':
+                // setStartState();
+                break;
+        }
     });
 }
 
@@ -180,25 +233,24 @@ function addState(graph, locX, loxY) {
         // xml node as value, to store attributes for the state
         // const node = mxUtils.createXmlDocument().createElement('State');
         const node = null
-        state = graph.insertVertex(graph.getDefaultParent(), null, node, locX, loxY, 80, 30, STYLE_STATE);
+        state = graph.insertVertex(graph.getDefaultParent(), null, node, locX, loxY, STATE_MIN_WIDTH, STATE_MIN_HEIGHT, STYLE_STATE);
     } finally {
         graph.getModel().endUpdate();
     }
-    graph.editHandler.editState(graph, state);
+    graph.editHandler.editState(state);
     return state;
 }
 
 function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
-    const X = 200, Y = 200;
-    const width = 80;
-    const height = 30;
+    const X = 50, Y = 50;
     try {
         const node = null;
-        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, width, height, STYLE_STATE);
+        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, STATE_MIN_WIDTH, STATE_MIN_HEIGHT, STYLE_STATE);
         // Add LR ITem
-        graph.insertVertex(startState, null, graph.grammar.getStartLRItemText(), 5, 5, 40, 20, STYLE_LR_ITEM);
+        graph.insertVertex(startState, null, graph.grammar.getStartLRItemText(),
+            STATE_MARGIN, STATE_MARGIN, 30, LRITEM_HEIGHT, STYLE_LR_ITEM);
 
         // set start state and add startIndicator edge
         setStartStateIntern(graph, startState);
@@ -256,7 +308,7 @@ function deletedStates() {
     try {
         for (const cell of selection) {
             if (cell.getType() === STYLE_STATE || cell.getType() === STYLE_EDGE) {
-                if (graph.startState !== cell) { //start state cannot be deleted (now)
+                if (graph.startState !== cell) { //start state cannot be deleted
                     graph.getModel().remove(cell);
                 }
             }
@@ -451,8 +503,8 @@ function setGrammar(plainGrammar, lr0) {
 }
 
 function changeGrammarDOM(grammar) {
-    const grammarTextElement = document.getElementById("grammarText");
-    const grammarErrorElement = document.getElementById("grammarError");
+    const grammarTextElement = I("grammarText");
+    const grammarErrorElement = I("grammarError");
 
     //Set default state
     while (grammarTextElement.hasChildNodes()) grammarTextElement.removeChild(grammarTextElement.firstChild);
@@ -468,7 +520,11 @@ function changeGrammarDOM(grammar) {
     } else {
         grammarTextElement.appendChild(document.createTextNode(grammar));
 
-        document.getElementById("grammarPresent").classList.remove("d-none")
-        document.getElementById("grammarInput").classList.add("d-none");
+        I("grammarPresent").classList.remove("d-none")
+        I("grammarInput").classList.add("d-none");
     }
+
+    //show the graph content
+    I("graphContent").classList.remove("d-none");
+    I("saveGraph").classList.remove("d-none");
 }

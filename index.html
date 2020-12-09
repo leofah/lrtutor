@@ -58,36 +58,40 @@
 
   <h3 class="mt-3">Graph</h3>
   <div>
-    <button class="btn btn-outline-success" id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
+    <button class="btn btn-outline-success d-none" id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
     <button class="btn btn-outline-danger" id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
   </div>
-  <div>
-    <div>Zoom:</div>
-    <button class="btn btn-outline-info" id="zoomIn" onclick="zoomIn()">+</button>
-    <button class="btn btn-outline-info" id="resetZoom" onclick="resetZoom()">reset</button>
-    <button class="btn btn-outline-info" id="zoomOut" onclick="zoomOut()">-</button>
-  </div>
-  <div class="row">
+  <div class="d-none" id="graphContent">
+    <div>
+      <div>Zoom:</div>
+      <button class="btn btn-outline-info" id="zoomIn" onclick="zoomIn()">+</button>
+      <button class="btn btn-outline-info" id="resetZoom" onclick="resetZoom()">reset</button>
+      <button class="btn btn-outline-info" id="zoomOut" onclick="zoomOut()">-</button>
+    </div>
+    <div class="row">
 
-    <!-- Canvas -->
-    <div class="col-9 border mt-3" style="height: 500px">
-      <div id="mxCanvas"></div>
+      <!-- Canvas -->
+      <div class="col-9 border mt-3" style="height: 500px">
+        <div id="mxCanvas"></div>
+      </div>
+
+
+      <div id="graphActions" class="col-3 d-none">
+        <div class="mt-3">
+          <button class="btn btn-info d-none " id="actionDelete" onclick="deletedStates()">Delete States (del)</button>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-info d-none " id="actionToggleFinal" onclick="toggleFinalStates()">Toggle Final States
+            (f)
+          </button>
+        </div>
+        <!--        <div class="mt-3">-->
+        <!--          <button class="btn btn-info d-none " id="actionSetStart" onclick="setStartState()">Set Start State (s)-->
+        <!--          </button>-->
+      </div>
     </div>
 
-
-    <ul id="graphActions" class="col-3 navbar-nav d-none">
-      <li class="nav-item">
-        <button class="btn btn-info d-none " id="actionDelete" onclick="deletedStates()">Delete States</button>
-      </li>
-      <li class="nav-item">
-        <button class="btn btn-info d-none " id="actionToggleFinal" onclick="toggleFinalStates()">Toggle Final States</button>
-      </li>
-      <li class="nav-item">
-        <button class="btn btn-info d-none " id="actionSetStart" onclick="setStartState()">Set Start State</button>
-      </li>
-    </ul>
-
-    <div id="graphErrors" class="col-3 d-none">
+    <div id="graphErrors" class="col-3">
 
     </div>
 
@@ -99,6 +103,7 @@
     <button class="btn btn-success" onclick="checkGraph()">Check Graph</button>
     <button class="btn btn-outline-success" onclick="hideErrors()">Hide Errors</button>
   </div>
+</div>
 </div>
 </body>
 <script type="text/javascript" src="index.js"></script>

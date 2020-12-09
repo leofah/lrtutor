@@ -28,23 +28,25 @@ function checkGraph() {
 
     //print errors in HTML
     let everythingCorrect = true;
-    const errorElement = document.getElementById("graphErrors");
+    const errorElement = I("graphErrors");
 
     const CLASSES_ERROR = "alert alert-danger";
     const CLASSES_WARNING = "alert alert-warning";
     const CLASSES_CORRECT = "alter alert-success";
 
 
-    if (lrCheck.incorrect.length > 0 || !correctStart || closureCheck.incorrect.length > 0 || transitionCheck.incorrect.length > 0) {
+    if (lrCheck.incorrect.length > 0  || closureCheck.incorrect.length > 0 || transitionCheck.incorrect.length > 0) {
         everythingCorrect = false;
-        addNode("Please look at the graph to see the errors", errorElement, CLASSES_ERROR)
+        addNode("Please look at the graph to see the errors", errorElement, CLASSES_ERROR);
+    }
+    if (!correctStart) {
+        everythingCorrect = false
+        addNode("The Start state is not correct or missing", errorElement, CLASSES_ERROR);
     }
 
     for (const [cellID, errorTransitions] of transitionCheck.stateIncorrectTransitions) {
-        console.log(cellID);
-        console.log(errorTransitions);
         const extraTransitions = errorTransitions.extraTransitions
-        const missingTransitions =  errorTransitions.missingTransitions
+        const missingTransitions = errorTransitions.missingTransitions
 
         if (extraTransitions.length > 0) {
             everythingCorrect = false;
@@ -88,7 +90,7 @@ function checkGraph() {
     if (everythingCorrect) addNode("Your Graph is correct", errorElement, CLASSES_CORRECT);
 
     errorElement.classList.remove("d-none")
-    document.getElementById("graphActions").classList.add("d-none");
+    I("graphActions").classList.add("d-none");
 
 }
 
@@ -105,7 +107,7 @@ function hideErrors() {
         h.destroy();
     }
 
-    const errorElement = document.getElementById("graphErrors");
+    const errorElement = I("graphErrors");
     while (errorElement.childElementCount > 0) errorElement.removeChild(errorElement.firstChild);
     errorElement.classList.add("d-none");
 }
@@ -240,7 +242,9 @@ function checkTransitions(graph) {
         }
 
         //filter for extra and missing transitions
-        const hasTransitions = cell.edges.filter(e => e.getTerminal(true) === cell).map(e => e.value);
+        const edges = cell.edges
+        let hasTransitions = []
+        if (edges) hasTransitions = cell.edges.filter(e => e.getTerminal(true) === cell).map(e => e.value);
         const extraTransitions = hasTransitions.filter(v => !needsTransitions.has(v));
         stateIncorrectTransitions.set(cell.id, {
             'extraTransitions': extraTransitions,

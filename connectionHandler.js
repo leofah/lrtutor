@@ -22,7 +22,12 @@ class connectionHandler {
     }
 
     mouseDown(sender, evt) {
+        // if (evt.isConsumed()) return;
+        // evt is always consumed by mxGraphHandler. For the event to be not consumed, the graph must be set disabled,
+        // but this removes the ability the move or select cells
+
         let cell = this.graph.getCellAt(evt.getGraphX(), evt.getGraphY(), null, true, false);
+        evt.consume()
         if (cell && cell.getType() === STYLE_HOVER_ITEM) {
             this.isDraggingEdge = true;
             this.draggingTerminal = cell.getValue();
@@ -41,7 +46,9 @@ class connectionHandler {
     }
 
     mouseUp(sender, evt) {
+        // if (evt.isConsumed()) return;
         if (this.isDraggingEdge) {
+            evt.consume();
             //remove preview Edge
             this.removePreview();
 
@@ -75,7 +82,6 @@ class connectionHandler {
     }
 
     mouseMove(sender, evt) {
-        // TODO evt.getCell()
         let cell = this.graph.getCellAt(evt.graphX, evt.graphY, null, true, false);
         let parentCell = this.getHighestParent(cell);
         if (this.isDraggingEdge) {
