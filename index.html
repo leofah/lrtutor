@@ -81,29 +81,20 @@
           <button class="btn btn-info d-none " id="actionDelete" onclick="deletedStates()">Delete States (del)</button>
         </div>
         <div class="mt-3">
-          <button class="btn btn-info d-none " id="actionToggleFinal" onclick="toggleFinalStates()">Toggle Final States
-            (f)
+          <button class="btn btn-info d-none " id="actionToggleFinal" onclick="toggleFinalStates()">
+            Toggle Final States (f)
           </button>
         </div>
-        <!--        <div class="mt-3">-->
-        <!--          <button class="btn btn-info d-none " id="actionSetStart" onclick="setStartState()">Set Start State (s)-->
-        <!--          </button>-->
       </div>
+
+      <div id="graphErrors" class="col-3"></div>
     </div>
 
-    <div id="graphErrors" class="col-3">
-
+    <div class="mt-1">
+      <button class="btn btn-success" onclick="checkGraph()">Check Graph</button>
+      <button class="btn btn-outline-success" onclick="hideErrors()">Hide Errors</button>
     </div>
-
-
   </div>
-
-
-  <div class="mt-1">
-    <button class="btn btn-success" onclick="checkGraph()">Check Graph</button>
-    <button class="btn btn-outline-success" onclick="hideErrors()">Hide Errors</button>
-  </div>
-</div>
 </div>
 </body>
 <script type="text/javascript" src="index.js"></script>

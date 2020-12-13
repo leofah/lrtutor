@@ -70,7 +70,7 @@ function initGraph(grammar) {
     // graph.setConnectable(true); //not needed if custom connectionHandler implemented and activated
     // graph.setAllowLoops(true); //works with the built in mxGraph connection Handler
     g.setEdgeLabelsMovable(false);
-    // g.setAutoSizeCells(true);
+    g.setAutoSizeCells(true);
     g.setCellsResizable(false);
     g.setCellsCloneable(false);
     g.foldingEnabled = false;
@@ -154,6 +154,7 @@ function addListeners(graph) {
                 graph.stopEditing(true);
                 return;
             }
+            if (graph.getSelectionCells().length > 0) return
             const cell = evt.getCell();
             if (cell) return;
             addState(graph, evt.getGraphX(), evt.getGraphY());
@@ -201,9 +202,6 @@ function addListeners(graph) {
         }
         if (nrStates > 0) aToggle.classList.remove("d-none");
         else aToggle.classList.add("d-none");
-
-        if (nrStates === 1) aSetStart.classList.remove("d-none");
-        else aSetStart.classList.add("d-none");
 
     });
 
