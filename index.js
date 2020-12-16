@@ -18,6 +18,7 @@ const STATE_MIN_WIDTH = 60;
 
 //include files (for development)
 document.write('<script src="connectionHandler.js"></script>')
+document.write('<script src="connectionHandlerClick.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
 document.write('<script src="checkGraph.js"></script>')
@@ -53,6 +54,9 @@ mxCell.prototype.isFinal = function () {
 let graph = new mxGraph();
 let graphActive = false; //indicates if a graph and grammar is already loaded
 
+//TODO don't allow the canvas to be moved
+//TODO add specific height and width for canvas
+
 function main() {
     //checks if browser is supported
     if (!mxClient.isBrowserSupported()) {
@@ -75,10 +79,10 @@ function initGraph(grammar) {
     g.setCellsCloneable(false);
     g.foldingEnabled = false;
 
-    g.ownConnectionHandler = new connectionHandler(g)
-    g.addMouseListener(g.ownConnectionHandler);
-    g.editHandler = new editHandler(g);
     g.grammar = grammar;
+    // add custom handler for editing and connection cells
+    g.ownConnectionHandler = new connectionHandlerClick(g)
+    g.editHandler = new editHandler(g);
 
     setStylsheet(g);
     addListeners(g);
@@ -147,14 +151,17 @@ function addListeners(graph) {
     //add a new State on the Canvas
     graph.addMouseListener({
         'mouseUp': function (_, evt) {
-            //evt is a mxMouseEvent not an mxEvent
-            //TODO dont create state if adding edge
+            // needs to be in Mouse Up, cause Mouse Down stops the editing automatically. This stopping is
+            // executed automatically after this handler and cannot be changed.
+            // Checking if the User was editing is therefore only possible with huge overhead.
             if (evt.isConsumed()) return
-            if (graph.cellEditor.editingCell) {
-                graph.stopEditing(true);
-                return;
-            }
-            if (graph.getSelectionCells().length > 0) return
+            if (graph.getSelectionCells().length > 0) return; //deselect cells and don't add a new state
+
+            // if (graph.cellEditor.editingCell) { // ist never editing, because mouse down stops editing
+            //     graph.stopEditing(true);
+            //     return;
+            // }
+
             const cell = evt.getCell();
             if (cell) return;
             addState(graph, evt.getGraphX(), evt.getGraphY());
@@ -188,7 +195,6 @@ function addListeners(graph) {
         const gAction = I("graphActions");
         const aDelete = I("actionDelete");
         const aToggle = I("actionToggleFinal");
-        const aSetStart = I("actionSetStart");
         const gErrors = I("graphErrors");
 
         if (nrStates + nrEdges > 0) {
@@ -223,8 +229,9 @@ function addListeners(graph) {
 
 // ---------------- stuff ------------------------
 
+// adds a state to the graph on given position and starts editing the first LR item
+// returns the created cell
 function addState(graph, locX, loxY) {
-    // adds a state to the graph on given position and returns the created cell
     let state;
     graph.getModel().beginUpdate();
     try {
@@ -369,8 +376,7 @@ function resetZoom() {
 function serializeGraph(graph) {
 
     //remove temporary shapes added to the graph, they should not be saved
-    graph.ownConnectionHandler.removePreview();
-    graph.ownConnectionHandler.removeHoverCell();
+    graph.ownConnectionHandler.hide();
 
     //use mxCodec to create an XML representations of the graph
     const enc = new mxCodec();
@@ -429,6 +435,10 @@ function deSerializeGraph(serial) {
         graph.startState = graph.getModel().cells[startID];
         const startSourceID = graphNode.getAttribute('startSource');
         graph.startIndicatorSource = graph.getModel().cells[startSourceID];
+
+        //reset the connection Handler
+        graph.ownConnectionHandler.abort();
+        graph.ownConnectionHandler.addTerminalButtons();
 
     } catch (e) {
         return "Invalid File Format: " + e;

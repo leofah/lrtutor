@@ -76,14 +76,21 @@
       </div>
 
 
-      <div id="graphActions" class="col-3 d-none">
-        <div class="mt-3">
-          <button class="btn btn-info d-none " id="actionDelete" onclick="deletedStates()">Delete States (del)</button>
+      <div id="graphActions" class="col-3 align-self-stretch">
+        <div class="mt-1">
+          <button class="btn btn-info d-none " id="actionDelete" onclick="deletedStates()">
+            Delete States (del)
+          </button>
         </div>
-        <div class="mt-3">
+        <div class="mt-1">
           <button class="btn btn-info d-none " id="actionToggleFinal" onclick="toggleFinalStates()">
             Toggle Final States (f)
           </button>
+        </div>
+        <div class="position-absolute fixed-bottom">
+          <div id="transitionTerminals" class="d-none">
+            <h5>Make a transition with the following (Non-) Terminal:</h5>
+          </div>
         </div>
       </div>
 
