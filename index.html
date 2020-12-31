@@ -24,36 +24,38 @@
 
   </div>
 
+  <div>
+    <h3 class="mt-3">Grammar</h3>
+    <div class="row">
+      <div id="grammarInput" class="col-3">
+        <label for="grammarTextArea"></label>
+        <textarea class="form-control" id="grammarTextArea" rows="10" cols="40" placeholder="Grammar"></textarea>
 
-  <h3 class="mt-3">Grammar</h3>
-  <div class="row">
-    <div id="grammarInput" class="col-3">
-      <label for="grammarTextArea"></label>
-      <textarea class="form-control" id="grammarTextArea" rows="10" cols="40" placeholder="Grammar"></textarea>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="LR" id="radio0" value="0" checked>
+          <label class="form-check-label" for="radio0">LR0</label>
+        </div>
 
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="LR" id="radio0" value="0" checked>
-        <label class="form-check-label" for="radio0">LR0</label>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="LR" id="radio1" value="1">
+          <label class="form-check-label" for="radio1">LR1</label>
+        </div>
+
+        <button class="btn btn-outline-success" id="setGrammar"
+                onclick="setGrammar(document.getElementById('grammarTextArea').value, document.getElementById('radio0').checked)">
+          Set new Grammar
+        </button>
+      </div>
+      <div id="grammarPresent" class="col-3 d-none">
+        <pre id="grammarText"></pre>
       </div>
 
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="LR" id="radio1" value="1">
-        <label class="form-check-label" for="radio1">LR1</label>
+      <div class="col-9">
+        Explanation on how to input the grammar
+        <pre id="grammarError" class="alert alert-danger d-none"></pre>
       </div>
-
-      <button class="btn btn-outline-success" id="setGrammar"
-              onclick="setGrammar(document.getElementById('grammarTextArea').value, document.getElementById('radio0').checked)">
-        Set new Grammar
-      </button>
     </div>
-    <div id="grammarPresent" class="col-3 d-none">
-      <pre id="grammarText"></pre>
-    </div>
-
-    <div class="col-9">
-      Explanation on how to input the grammar
-      <pre id="grammarError" class="alert alert-danger d-none"></pre>
-    </div>
+    <button class="btn btn-outline-danger d-none">Insert a new Grammar</button>
   </div>
 
   <h3 class="mt-3">Graph</h3>
@@ -62,17 +64,11 @@
     <button class="btn btn-outline-danger" id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
   </div>
   <div class="d-none" id="graphContent">
-    <div>
-      <div>Zoom:</div>
-      <button class="btn btn-outline-info" id="zoomIn" onclick="zoomIn()">+</button>
-      <button class="btn btn-outline-info" id="resetZoom" onclick="resetZoom()">reset</button>
-      <button class="btn btn-outline-info" id="zoomOut" onclick="zoomOut()">-</button>
-    </div>
     <div class="row">
 
       <!-- Canvas -->
-      <div class="col-9 border mt-3" style="height: 500px">
-        <div id="mxCanvas"></div>
+      <div class="col-9 border mt-3">
+        <div id="mxCanvas" style="height: 500px; overflow: auto"></div>
       </div>
 
 

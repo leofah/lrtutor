@@ -39,7 +39,7 @@ class connectionHandlerClick {
             if (selectedCells.length === 1) {
                 let cell = selectedCells[0];
                 while (cell != null && cell.getType() !== STYLE_STATE) cell = cell.getParent();
-                this.setStartState(cell);
+                if (cell != null) this.setStartState(cell);
             } else if (!this.terminal) {
                 this.abort();
             }

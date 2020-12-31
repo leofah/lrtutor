@@ -77,6 +77,7 @@ function initGraph(grammar) {
     g.setAutoSizeCells(true);
     g.setCellsResizable(false);
     g.setCellsCloneable(false);
+    g.setAllowNegativeCoordinates(false);
     g.foldingEnabled = false;
 
     g.grammar = grammar;
@@ -345,26 +346,6 @@ function setStartState() {
         setStartStateIntern(graph, newStartState);
     } finally {
         graph.getModel().endUpdate();
-    }
-}
-
-
-// ------------ Zooming---------------
-function zoomIn() {
-    if (graphActive) {
-        graph.zoomIn();
-    }
-}
-
-function zoomOut() {
-    if (graphActive) {
-        graph.zoomOut();
-    }
-}
-
-function resetZoom() {
-    if (graphActive) {
-        graph.zoomActual();
     }
 }
 
