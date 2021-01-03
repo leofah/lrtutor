@@ -95,7 +95,6 @@ class connectionHandlerClick {
         edge.dialect = this.graph.dialect;
         edge.isDashed = true;
         edge.init(this.graph.getView().getBackgroundPane());
-        // edge.setValue(this.terminal);
         this.previewEdge = edge;
         //value
         const terminal = new mxText(this.terminal, null, null, null, '#0000ff');
@@ -161,10 +160,15 @@ class connectionHandlerClick {
             this.previewCell.bounds = new mxRectangle(x, y, width, height);
         }
         //move preview terminal
+        const vec = {'x': currentPoint.x - this.startPoint.x, 'y': currentPoint.y - this.startPoint.y};
+        const l = Math.sqrt(vec.x ** 2 + vec.y ** 2)
+        const offset = {'x': vec.y * 10 / l, 'y': -vec.x * 10 / l}; //position the label orthogonal with distance 10
         this.previewTerminal.bounds = new mxRectangle(
-            (this.startPoint.x + currentPoint.x) / 2, (this.startPoint.y + currentPoint.y) / 2, 20, 20);
+            this.startPoint.x + vec.x / 2 + offset.x,
+            this.startPoint.y + vec.y / 2 + offset.y, null, null);
         //move preview edge
         this.previewEdge.points = [this.startPoint, currentPoint];
+
         this.previewEdge.redraw();
         this.previewTerminal.redraw();
         this.previewCell.redraw();
@@ -239,6 +243,7 @@ class connectionHandlerClick {
      * @param state: target state
      */
     setEndState(state) {
+        if (this.startState === null || this.terminal === null) return;
         //end at state and add the transition
         this.graph.getModel().beginUpdate();
         try {
@@ -252,10 +257,13 @@ class connectionHandlerClick {
             }
             const edge = this.graph.insertEdge(
                 this.graph.getDefaultParent(), null, this.terminal, this.startState, state, STYLE_EDGE);
+            //position the label of the edge
+            edge.geometry.x = 0; //position on the edge (-1, 1)
+            edge.geometry.y = 10; //orthogonal distance from edge in pixels
         } finally {
             this.graph.getModel().endUpdate();
         }
-        this.graph.getSelectionModel().clear()
+        this.graph.getSelectionModel().clear();
         this.abort();
     }
 
