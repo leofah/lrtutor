@@ -15,7 +15,6 @@ const STATE_MIN_WIDTH = 60;
 //include files (for development)
 document.write('<script src="graph.js"></script>')
 document.write('<script src="connectionHandler.js"></script>')
-document.write('<script src="connectionHandlerClick.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
 document.write('<script src="checkGraph.js"></script>')
@@ -54,6 +53,7 @@ function main() {
 }
 
 function initGraph(grammar) {
+    //setup the mxGraph and its variables
     const g = new mxGraph(I('mxCanvas'), new mxGraphModel());
     g.setAllowDanglingEdges(false);
     g.setDisconnectOnMove(false);
@@ -64,9 +64,11 @@ function initGraph(grammar) {
     g.setAllowNegativeCoordinates(false);
     g.foldingEnabled = false;
 
+    //own Setup
     g.grammar = grammar;
+
     // add custom handler for editing and connection cells
-    g.ownConnectionHandler = new connectionHandlerClick(g)
+    g.ownConnectionHandler = new connectionHandler(g)
     g.editHandler = new editHandler(g);
 
     setStylsheet(g);

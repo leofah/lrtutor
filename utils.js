@@ -44,6 +44,9 @@ const arrayIncludes = (array, value) => array.filter(v => deepEqual(v, value)).l
  */
 const isSetsEqual = (a, b) => a.every(v => arrayIncludes(b, v)) && b.every(v => arrayIncludes(a, v));
 
+/**
+ * shortcut for get Element By ID
+ */
 function I(elementID) {
     return document.getElementById(elementID);
 }

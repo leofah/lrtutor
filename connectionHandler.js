@@ -8,7 +8,7 @@
  *      as target Sate
  */
 
-class connectionHandlerClick {
+class connectionHandler {
 
     constructor(graph) {
         this.graph = graph;
@@ -244,26 +244,7 @@ class connectionHandlerClick {
      */
     setEndState(state) {
         if (this.startState === null || this.terminal === null) return;
-        //end at state and add the transition
-        this.graph.getModel().beginUpdate();
-        try {
-            // remove edge with same terminal (deterministic graph)
-            for (const i in this.startState.edges) {
-                let edge = this.startState.getEdgeAt(i);
-                if (edge.getValue() === this.terminal && edge.getTerminal(true) === this.startState) {
-                    this.graph.removeCells([edge]);
-                    break;
-                }
-            }
-            const edge = this.graph.insertEdge(
-                this.graph.getDefaultParent(), null, this.terminal, this.startState, state, STYLE_EDGE);
-            //position the label of the edge
-            edge.geometry.x = 0; //position on the edge (-1, 1)
-            edge.geometry.y = 10; //orthogonal distance from edge in pixels
-        } finally {
-            this.graph.getModel().endUpdate();
-        }
-        this.graph.getSelectionModel().clear();
+        addEdge(this.graph, this.startState, state, this.terminal);
         this.abort();
     }
 

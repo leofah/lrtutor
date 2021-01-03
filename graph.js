@@ -15,6 +15,45 @@ function addState(graph, locX, loxY) {
     return state;
 }
 
+/**
+ * Add a new Edge to the graph. If an edge with the same terminal and source
+ * already exists, this edge is removed, as the graph is deterministic.
+ *
+ * @param graph mxGraph
+ * @param source Source of the edge
+ * @param target Target of the edge
+ * @param terminal Terminal to use as label for the edge
+ * @return the created edge
+ */
+function addEdge(graph, source, target, terminal) {
+    graph.getModel().beginUpdate();
+    try {
+        // remove edge with same terminal (deterministic graph)
+        for (const i in source.edges) {
+            let edge = source.getEdgeAt(i);
+            if (edge.getValue() === terminal && edge.getTerminal(true) === source) {
+                graph.removeCells([edge]);
+                break;
+            }
+        }
+        const edge = graph.insertEdge(
+            graph.getDefaultParent(), null, terminal, source, target, STYLE_EDGE);
+        //position the label of the edge
+        edge.geometry.x = 0; //position on the edge (-1, 1)
+        edge.geometry.y = 10; //orthogonal distance from edge in pixels
+    } finally {
+        graph.getModel().endUpdate();
+    }
+    graph.getSelectionModel().clear();
+}
+
+/**
+ * Adds the first State to the Graph. This will always be the start State of the graph.
+ * All identifiers for the start state are added accordingly. The first LR Item for the
+ * start production of the grammar is also added.
+ *
+ * @param graph
+ */
 function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
@@ -33,6 +72,13 @@ function addStartState(graph) {
     }
 }
 
+/**
+ * Helper to set the variables in the graph to find the start state
+ * Could be used, if the start state changes to a new state.
+ *
+ * @param graph mxGraph
+ * @param state new start State
+ */
 function setStartStateIntern(graph, state) {
     if (state == null)
         return;
@@ -45,8 +91,13 @@ function setStartStateIntern(graph, state) {
     graph.startIndicatorSource = source;
 }
 
+/**
+ * move start state startIndicator to its correct position, so it is horizontal.
+ * Used if the start state moved.
+ *
+ * @param graph
+ */
 function redrawStartIndicator(graph) {
-    // move start state startIndicator if start state moved
     const geoStart = graph.startState.getGeometry();
     const geoSource = graph.startIndicatorSource.getGeometry().clone()
     geoSource.x = geoStart.x - 30;
