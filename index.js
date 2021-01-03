@@ -1,32 +1,26 @@
 const GRAPH_VERSION = '0.4';
 
+//Style and type names for the different elements on the canvas
 const STYLE_STATE = 'state';
 const STYLE_FINAL_STATE = 'final'
 const STYLE_EDGE = 'edge';
 const STYLE_LR_ITEM = 'lritem';
-const STYLE_HOVER = 'hover';
-const STYLE_HOVER_ITEM = 'hitem';
 
-const ATTR_START = 'start';
-const ATTR_FINAL = 'final';
-
-
+//Set Pixel Values for States and Items
 const STATE_MARGIN = 10;
 const LRITEM_HEIGHT = 20;
 const STATE_MIN_HEIGHT = 40;
 const STATE_MIN_WIDTH = 60;
 
 //include files (for development)
+document.write('<script src="graph.js"></script>')
 document.write('<script src="connectionHandler.js"></script>')
 document.write('<script src="connectionHandlerClick.js"></script>')
 document.write('<script src="editHandler.js"></script>')
 document.write('<script src="grammar.js"></script>')
 document.write('<script src="checkGraph.js"></script>')
 document.write('<script src="utils.js"></script>')
-
-function I(elementID) {
-    return document.getElementById(elementID);
-}
+document.write('<script src="io.js"></script>')
 
 //add prototype function for cell to get the type (state, LR-Item) of the cell
 mxCell.prototype.getType = function () {
@@ -39,10 +33,6 @@ mxCell.prototype.getType = function () {
         return STYLE_STATE;
     } else if (style.includes(STYLE_EDGE)) {
         return STYLE_EDGE;
-    } else if (style.includes(STYLE_HOVER)) {
-        return STYLE_HOVER;
-    } else if (style.includes(STYLE_HOVER_ITEM)) {
-        return STYLE_HOVER_ITEM;
     }
     return '';
 }
@@ -53,9 +43,6 @@ mxCell.prototype.isFinal = function () {
 
 let graph = new mxGraph();
 let graphActive = false; //indicates if a graph and grammar is already loaded
-
-//TODO don't allow the canvas to be moved
-//TODO add specific height and width for canvas
 
 function main() {
     //checks if browser is supported
@@ -68,11 +55,8 @@ function main() {
 
 function initGraph(grammar) {
     const g = new mxGraph(I('mxCanvas'), new mxGraphModel());
-    // g.setEnabled(false); //move and select does not work
     g.setAllowDanglingEdges(false);
     g.setDisconnectOnMove(false);
-    // graph.setConnectable(true); //not needed if custom connectionHandler implemented and activated
-    // graph.setAllowLoops(true); //works with the built in mxGraph connection Handler
     g.setEdgeLabelsMovable(false);
     g.setAutoSizeCells(true);
     g.setCellsResizable(false);
@@ -117,30 +101,12 @@ function setStylsheet(graph) {
 
     //edge
 
-    //hover
-    let hover_style = stylesheet.createDefaultVertexStyle();
-    let hitem_style = stylesheet.createDefaultVertexStyle();
-    stylesheet.putCellStyle(STYLE_HOVER, hover_style);
-    stylesheet.putCellStyle(STYLE_HOVER_ITEM, hitem_style);
-    //background
-    hover_style[mxConstants.STYLE_MOVABLE] = 0;
-    hover_style[mxConstants.STYLE_FILLCOLOR] = '#e9e9e9';
-    hover_style[mxConstants.STYLE_ROUNDED] = 1;
-    hover_style[mxConstants.STYLE_EDITABLE] = 0;
-    //item
-    hitem_style[mxConstants.STYLE_MOVABLE] = 0;
-    hitem_style[mxConstants.STYLE_FILLCOLOR] = 'inherit';
-    hitem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
-    hitem_style[mxConstants.STYLE_EDITABLE] = 0;
-
     stylesheet.putCellStyle(STYLE_STATE, state_style);
     stylesheet.putCellStyle(STYLE_FINAL_STATE, final_state_style)
     stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
     stylesheet.putCellStyle(STYLE_EDGE, edge_style);
 }
 
-
-// ------------- Listener ---------------
 function addListeners(graph) {
     // example listener
     graph.addListener(null, (_, evt) => {
@@ -157,6 +123,8 @@ function addListeners(graph) {
             // Checking if the User was editing is therefore only possible with huge overhead.
             if (evt.isConsumed()) return
             if (graph.getSelectionCells().length > 0) return; //deselect cells and don't add a new state
+            //don't add a cell if the canvas was scrolled
+            if (this.scrollStart !== I('mxCanvas').scrollLeft + I('mxCanvas').scrollTop) return;
 
             // if (graph.cellEditor.editingCell) { // ist never editing, because mouse down stops editing
             //     graph.stopEditing(true);
@@ -171,6 +139,7 @@ function addListeners(graph) {
         'mouseMove': function () {
         },
         'mouseDown': function () {
+            this.scrollStart = I('mxCanvas').scrollLeft + I('mxCanvas').scrollTop;
         },
     });
 
@@ -226,260 +195,6 @@ function addListeners(graph) {
                 break;
         }
     });
-}
-
-// ---------------- stuff ------------------------
-
-// adds a state to the graph on given position and starts editing the first LR item
-// returns the created cell
-function addState(graph, locX, loxY) {
-    let state;
-    graph.getModel().beginUpdate();
-    try {
-        // xml node as value, to store attributes for the state
-        // const node = mxUtils.createXmlDocument().createElement('State');
-        const node = null
-        state = graph.insertVertex(graph.getDefaultParent(), null, node, locX, loxY, STATE_MIN_WIDTH, STATE_MIN_HEIGHT, STYLE_STATE);
-    } finally {
-        graph.getModel().endUpdate();
-    }
-    graph.editHandler.editState(state);
-    return state;
-}
-
-function addStartState(graph) {
-    //add start state to graph
-    graph.getModel().beginUpdate();
-    const X = 50, Y = 50;
-    try {
-        const node = null;
-        const startState = graph.insertVertex(graph.getDefaultParent(), null, node, X, Y, STATE_MIN_WIDTH, STATE_MIN_HEIGHT, STYLE_STATE);
-        // Add LR ITem
-        graph.insertVertex(startState, null, graph.grammar.getStartLRItemText(),
-            STATE_MARGIN, STATE_MARGIN, 30, LRITEM_HEIGHT, STYLE_LR_ITEM);
-
-        // set start state and add startIndicator edge
-        setStartStateIntern(graph, startState);
-    } finally {
-        graph.getModel().endUpdate();
-    }
-}
-
-function setStartStateIntern(graph, state) {
-    if (state == null)
-        return;
-    const geo = state.getGeometry();
-    const source = graph.insertVertex(graph.getDefaultParent(), null, null,
-        geo.x - 30, geo.y + geo.height / 2, 0, 0);
-    const startIndicator = graph.insertEdge(graph.getDefaultParent(), null, null, source, state);
-    graph.startState = state;
-    graph.getModel().remove(graph.startIndicatorSource);
-    graph.startIndicatorSource = source;
-}
-
-function redrawStartIndicator(graph) {
-    // move start state startIndicator if start state moved
-    const geoStart = graph.startState.getGeometry();
-    const geoSource = graph.startIndicatorSource.getGeometry().clone()
-    geoSource.x = geoStart.x - 30;
-    geoSource.y = geoStart.y + geoStart.height / 2
-    graph.getModel().setGeometry(graph.startIndicatorSource, geoSource);
-}
-
-// ------------ selected Cells actions-----------
-
-/**
- * toggles the final state attribute on the selected States
- */
-function toggleFinalStates() {
-    const selection = graph.getSelectionCells()
-    for (const cell of selection) {
-        if (cell.getType() === STYLE_STATE) {
-            if (cell.getStyle() === STYLE_FINAL_STATE) {
-                graph.getModel().setStyle(cell, STYLE_STATE)
-            } else {
-                graph.getModel().setStyle(cell, STYLE_FINAL_STATE)
-            }
-        }
-    }
-}
-
-/**
- * deletes the selected states and edges
- * connected edges are deleted as well
- */
-function deletedStates() {
-    const selection = graph.getSelectionCells()
-    graph.getModel().beginUpdate();
-    try {
-        for (const cell of selection) {
-            if (cell.getType() === STYLE_STATE || cell.getType() === STYLE_EDGE) {
-                if (graph.startState !== cell) { //start state cannot be deleted
-                    graph.getModel().remove(cell);
-                }
-            }
-        }
-    } finally {
-        graph.getModel().endUpdate();
-    }
-}
-
-/**
- * sets the selected state to the start State if only one state is selected
- */
-function setStartState() {
-    const selection = graph.getSelectionCells()
-    graph.getModel().beginUpdate();
-    try {
-        let newStartState = null;
-        for (const cell of selection) {
-            if (cell.getType() === STYLE_STATE) {
-                if (newStartState === null) {
-                    newStartState = cell;
-                } else {
-                    console.log("Only one state can be start State, but multiple states were selected")
-                    newStartState = null;
-                    break;
-                }
-            }
-        }
-        setStartStateIntern(graph, newStartState);
-    } finally {
-        graph.getModel().endUpdate();
-    }
-}
-
-// ------------ save and load graph -----------
-/**
- * creates an XML representation of the graph, with mxCodec ans mxUtils.getXml
- * a version attribute is added for compatibility reasons
- */
-function serializeGraph(graph) {
-
-    //remove temporary shapes added to the graph, they should not be saved
-    graph.ownConnectionHandler.hide();
-
-    //use mxCodec to create an XML representations of the graph
-    const enc = new mxCodec();
-    const graphXml = enc.encode(graph.getModel());
-
-    const rootXml = document.implementation.createDocument(null, "LRTutor", null);
-    const rootElem = rootXml.getElementsByTagName('LRTutor')[0];
-    rootElem.setAttribute('version', GRAPH_VERSION);
-
-    const graphNode = rootXml.createElement('Graph');
-    graphNode.appendChild(graphXml);
-    rootElem.appendChild(graphNode);
-
-    //save grammar
-    const grammarNode = rootXml.createElement('Grammar');
-    grammarNode.setAttribute('lr', graph.grammar.lr);
-    grammarNode.setAttribute('plain', graph.grammar);
-    rootElem.appendChild(grammarNode);
-
-    //save start state
-    graphNode.setAttribute('startState', graph.startState.id)
-    graphNode.setAttribute('startSource', graph.startIndicatorSource.id)
-    return mxUtils.getPrettyXml(rootXml);
-}
-
-function deSerializeGraph(serial) {
-    /**
-     * deserializes a text/xml representation of the graph and loads it.
-     * Version number is checked
-     */
-    try {
-        const doc = mxUtils.parseXml(serial);
-        const graphNode = doc.getElementsByTagName('Graph')[0];
-        const vers = doc.documentElement.getAttribute('version');
-        if (vers !== GRAPH_VERSION) {
-            return "Invalid File Version: '" + vers + "', need version: '" + GRAPH_VERSION + "'";
-        }
-
-        //add grammar
-        const grammarNode = doc.getElementsByTagName('Grammar')[0];
-        const grammar = new Grammar(grammarNode.getAttribute('plain'), parseInt(grammarNode.getAttribute('lr')));
-        changeGrammarDOM(grammar);
-        if (grammar.error())
-            return;
-        if (!graphActive)
-            initGraph(grammar);
-        else
-            graph.grammar = grammar;
-
-        const graphDocument = mxUtils.parseXml(graphNode.innerHTML);
-        const codec = new mxCodec(graphDocument);
-        codec.decode(graphNode.firstElementChild, graph.getModel());
-
-        //set start state
-        const startID = graphNode.getAttribute('startState');
-        graph.startState = graph.getModel().cells[startID];
-        const startSourceID = graphNode.getAttribute('startSource');
-        graph.startIndicatorSource = graph.getModel().cells[startSourceID];
-
-        //reset the connection Handler
-        graph.ownConnectionHandler.abort();
-        graph.ownConnectionHandler.addTerminalButtons();
-
-    } catch (e) {
-        return "Invalid File Format: " + e;
-    }
-}
-
-function saveGraph() {
-    if (graphActive)
-        saveFile('graph.xml', serializeGraph(graph), 'text/xml');
-}
-
-function loadGraph() {
-    loadFile(serial => {
-        // remove grammar input
-        const error = deSerializeGraph(serial);
-        if (error)
-            console.log(error);
-    });
-}
-
-function saveFile(filename, data, type) {
-    /**
-     * Asks the user to save the data as a file to the given filename
-     */
-    const blob = new Blob([data], {type: type});
-    if (window.navigator.msSaveOrOpenBlob) {
-        // handle IE
-        window.navigator.msSaveBlob(blob, filename);
-    } else {
-        const elem = window.document.createElement('a');
-        elem.href = window.URL.createObjectURL(blob);
-        elem.download = filename;
-        document.body.appendChild(elem);
-        elem.click();
-        document.body.removeChild(elem);
-        window.URL.revokeObjectURL(elem.href);
-    }
-}
-
-function loadFile(func) {
-    /**
-     * asks user to input a file. The content of the file is passed to the argument func(content)
-     */
-    const elem = window.document.createElement('input');
-    elem.type = 'file';
-    elem.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) {
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const content = e.target.result;
-            func(content);
-        };
-        reader.readAsText(file);
-    });
-    document.body.appendChild(elem);
-    elem.click();
-    document.body.removeChild(elem);
 }
 
 function setGrammar(plainGrammar, lr0) {
