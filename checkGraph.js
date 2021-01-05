@@ -1,9 +1,11 @@
 const errorHighlights = [];
 
 // TODO add help why the graph is not correct
+// TODO check for duplicate LR Items
 
 function checkGraph() {
     hideErrors();
+    prepareGraph(graph);
     const lrCheck = checkCorrectLrItems(graph);
     const closureCheck = checkCorrectClosure(graph);
     const transitionCheck = checkTransitions(graph);
@@ -11,7 +13,6 @@ function checkGraph() {
     const correctStart = checkStartState(graph);
     const connected = checkConnected(graph);
     const duplicates = checkDuplicateStated(graph);
-
 
     //get Cell Ids
     showIDs();
@@ -22,15 +23,15 @@ function checkGraph() {
         errorHighlight.highlight(graph.view.getState(cell));
         errorHighlights.push(errorHighlight);
     }
-    for (const cell of lrCheck.correct.concat(closureCheck.correct).concat(transitionCheck.correct)) {
-        const errorHighlight = new mxCellHighlight(graph, 'green', 1);
-        errorHighlight.highlight(graph.view.getState(cell));
-        errorHighlights.push(errorHighlight);
-    }
-    const startHighlight = new mxCellHighlight(graph, correctStart ? 'green' : 'red', 1);
-    const cell = graph.startIndicatorSource.edges[0];
-    startHighlight.highlight(graph.view.getState(cell));
-    errorHighlights.push(startHighlight);
+    // for (const cell of lrCheck.correct.concat(closureCheck.correct).concat(transitionCheck.correct)) {
+    //     const errorHighlight = new mxCellHighlight(graph, 'green', 1);
+    //     errorHighlight.highlight(graph.view.getState(cell));
+    //     errorHighlights.push(errorHighlight);
+    // }
+    // const startHighlight = new mxCellHighlight(graph, correctStart ? 'green' : 'red', 1);
+    // const cell = graph.startIndicatorSource.edges[0];
+    // startHighlight.highlight(graph.view.getState(cell));
+    // errorHighlights.push(startHighlight);
 
     //print errors in HTML
     let everythingCorrect = true;
@@ -38,35 +39,51 @@ function checkGraph() {
 
     const CLASSES_ERROR = "alert alert-danger";
     const CLASSES_WARNING = "alert alert-warning";
-    const CLASSES_CORRECT = "alter alert-success";
+    const CLASSES_CORRECT = "alert alert-success";
 
 
-    if (lrCheck.incorrect.length > 0  || closureCheck.incorrect.length > 0 || transitionCheck.incorrect.length > 0) {
+    if (lrCheck.incorrect.length > 0 || closureCheck.incorrect.length > 0 || transitionCheck.incorrect.length > 0) {
         everythingCorrect = false;
-        addNode("Please look at the graph to see the errors", errorElement, CLASSES_ERROR);
+        addNode(
+            "Please look at the graph to see the errors",
+            "<i>Highlighted LR-Item</i>: The Item could be parsed correctly. Look here[TODO] to see " +
+            "how write the LR Items<br><br>" +
+            "<i>Highlighted State</i>: The closure of the state is not correct. Invalid LR-Items are ignored<br><br>" +
+            "<i>Highlighted transition</i>: The transition is not needed or the target state has not the correct LR-Items " +
+            "with closure to be a successor of the start state.",
+            errorElement, CLASSES_ERROR);
     }
     if (!correctStart) {
         everythingCorrect = false
-        addNode("The Start state is not correct or missing", errorElement, CLASSES_ERROR);
+        addNode(
+            "The start state is not correct or missing",
+            "The start state needs the LR-Item '" + graph.grammar.getStartLRItemText() + "', maybe you deleted it",
+            errorElement, CLASSES_ERROR);
     }
 
     for (const [cellID, errorTransitions] of transitionCheck.stateIncorrectTransitions) {
-        const extraTransitions = errorTransitions.extraTransitions
-        const missingTransitions = errorTransitions.missingTransitions
+        const extraTransitions = errorTransitions.extraTransitions;
+        const missingTransitions = errorTransitions.missingTransitions;
 
         if (extraTransitions.length > 0) {
             everythingCorrect = false;
             let message = "State " + getIdForCell(cellID) + " has to many outgoing transitions with (non)terminals: " +
                 extraTransitions.join(', ')
-            addNode(message, errorElement, CLASSES_ERROR)
+            addNode(message,
+                "State " + getIdForCell(cellID) + " has no LR- Item with one of the terminals ["
+                + extraTransitions.join(', ') + "] after '" + DOT + "'",
+                errorElement, CLASSES_ERROR);
         }
         if (missingTransitions.length > 0) {
             everythingCorrect = false;
             let message = "State " + getIdForCell(cellID) + " misses transitions with following (non)terminals: " +
                 missingTransitions.join(', ')
-            addNode(message, errorElement, CLASSES_ERROR)
+            addNode(message,
+                "State " + getIdForCell(cellID) + " has a LR-Item 'A" + ARROW + "B" + DOT + "<b>C</b>D', " +
+                "but there is no transition with the (non)terminal 'C'. For every (non)terminal after '" + DOT +
+                "', there needs to be a transition.",
+                errorElement, CLASSES_ERROR);
         }
-
     }
 
     // final states correct
@@ -74,35 +91,57 @@ function checkGraph() {
         everythingCorrect = false;
         const message = "Not all states have the correct final status: " +
             finalCheck.incorrect.map(cell => getIdForCell(cell.id)).join(', ');
-        addNode(message, errorElement, CLASSES_ERROR)
+        addNode(message,
+            "A state with a LR-Item A" + ARROW + "B" + DOT + " (dot at the end) must be final, " +
+            "all other states must not be final",
+            errorElement, CLASSES_ERROR);
     }
     // graph connected
     if (connected.incorrect.length > 0) {
         everythingCorrect = false;
         const message = "Not all states are connected to the start state: " +
             connected.incorrect.map(cell => getIdForCell(cell.id)).join(', ');
-        addNode(message, errorElement, CLASSES_WARNING)
+        addNode(message,
+            "Not connected states are not critical, however they are not needed for a canonical automaton. " +
+            "Maybe you forgot to connect them.",
+            errorElement, CLASSES_WARNING);
     }
     // duplicates
     if (Object.keys(duplicates).length > 0) {
         everythingCorrect = false;
         let message = "There are duplicate states in the graph: ";
         for (const key in duplicates) {
-            message = message + duplicates[key].map(id => getIdForCell(id)).join(', ');
+            message = message + '[' + duplicates[key].map(id => getIdForCell(id)).join(', ') + '] ';
         }
-        addNode(message, errorElement, CLASSES_WARNING)
+        addNode(message,
+            "Duplicate states are not critical, but they make the automaton larger than needed. " +
+            "Consider moving all transitions to one of the duplicate states and delete the other states." +
+            "Invalid LR Items are ignored when finding the duplicate states. ",
+            errorElement, CLASSES_WARNING);
     }
 
-    if (everythingCorrect) addNode("Your Graph is correct", errorElement, CLASSES_CORRECT);
+    if (everythingCorrect) addNode("Your Graph is correct",
+        "Well done, you solved the complete graph",
+        errorElement, CLASSES_CORRECT);
 
     errorElement.classList.remove("d-none")
     I("graphActions").classList.add("d-none");
 
+    //enable bootstrap tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 }
 
-function addNode(message, errorElement, classes) {
+function addNode(message, tooltip, errorElement, classes) {
     const div = document.createElement("div");
     div.setAttribute("class", classes);
+    if (tooltip) {
+        div.setAttribute("data-toggle", "tooltip");
+        div.setAttribute("data-placement", "top");
+        div.setAttribute("data-html", "true");
+        div.setAttribute("title", tooltip);
+    }
     div.appendChild(document.createTextNode(message));
     errorElement.appendChild(div);
 }
@@ -117,6 +156,17 @@ function hideErrors() {
     while (errorElement.childElementCount > 0) errorElement.removeChild(errorElement.firstChild);
     errorElement.classList.add("d-none");
     hideIDs();
+}
+
+/**
+ * sets needed variables in the graph items
+ * @param graph mxGraph
+ */
+function prepareGraph(graph) {
+    for (const cell of Object.values(graph.getModel().cells)) {
+        if (cell.getType() !== STYLE_STATE) continue;
+        if (cell.children === null) cell.children = [];
+    }
 }
 
 /**
@@ -179,8 +229,8 @@ function checkCorrectClosure(graph) {
  *      incorrect: Edges which lead to an incorrect state
  *      correct: Edges which lead to a correct state
  *      stateIncorrectTransitions: Map state.id ->
- *          extraTransitions: edges, which are not needed in this state
- *          missingTransitions: list of terminals, which need a transition in this state (e.G. 'e', if S -> .e is an LRItem in this state)
+ *          extraTransitions: list of terminal which have a transition that is not needed in this state
+ *          missingTransitions: list of terminals which need a transition in this state (e.G. 'e', if S -> .e is an LRItem in this state)
  */
 function checkTransitions(graph) {
     const incorrect = [];
@@ -211,7 +261,8 @@ function checkTransitions(graph) {
             needsTransitions.add(terminal);
 
             //find the transition and check it
-            const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
+            let edge;
+            if (cell.edges) edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
             if (!edge) {
                 //no transition found -> is missing and check next lrItem
                 missingTransitions.add(terminal);
