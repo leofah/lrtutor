@@ -2,9 +2,18 @@ const GRAPH_VERSION = '0.4';
 
 //Style and type names for the different elements on the canvas
 const STYLE_STATE = 'state';
-const STYLE_FINAL_STATE = 'final'
+const STYLE_FINAL_STATE = 'final';
 const STYLE_EDGE = 'edge';
 const STYLE_LR_ITEM = 'lritem';
+const STYLE_SHOW_ID = 'showid';
+
+//Colors for the elements
+const COLOR_FONT = '#363D45';
+const COLOR_STATE = '#93E4F1';
+const COLOR_STATE_BORDER = '#0E606C';
+const COLOR_EDGE = '#073036';
+const COLOR_ID = '#F8F991';
+const COLOR_BACKGROUND = '#F5F5F4'
 
 //Set Pixel Values for States and Items
 const STATE_MARGIN = 10;
@@ -71,9 +80,10 @@ function initGraph(grammar) {
     g.ownConnectionHandler = new connectionHandler(g)
     g.editHandler = new editHandler(g);
 
-    setStylsheet(g);
+    setStylesheet(g);
     addListeners(g);
     addStartState(g);
+    registerCallbacks(g);
 
     //set global graph information
     graphActive = true;
@@ -82,31 +92,56 @@ function initGraph(grammar) {
     return g;
 }
 
-function setStylsheet(graph) {
+function setStylesheet(graph) {
     let stylesheet = graph.getStylesheet();
-    let state_style = stylesheet.createDefaultVertexStyle();
-    let lritem_style = stylesheet.createDefaultVertexStyle();
-    let edge_style = stylesheet.createDefaultEdgeStyle();
 
     //state
+    let state_style = {};
+    state_style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+    state_style[mxConstants.STYLE_FILLCOLOR] = COLOR_STATE;
+    state_style[mxConstants.STYLE_STROKECOLOR] = COLOR_STATE_BORDER;
+
     state_style[mxConstants.STYLE_EDITABLE] = 0;
     state_style[mxConstants.STYLE_ROUNDED] = 1;
+    stylesheet.putCellStyle(STYLE_STATE, state_style);
 
     //final_state
     let final_state_style = Object.assign({}, state_style); //copy state_style
     final_state_style[mxConstants.STYLE_STROKEWIDTH] = 5;
+    stylesheet.putCellStyle(STYLE_FINAL_STATE, final_state_style)
 
     //lritem
-    lritem_style[mxConstants.STYLE_MOVABLE] = 0;
+    let lritem_style = {};
+    lritem_style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
+    lritem_style[mxConstants.STYLE_FONTCOLOR] = COLOR_FONT;
     lritem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
+    lritem_style[mxConstants.STYLE_FILL_OPACITY] = 0;
+    lritem_style[mxConstants.STYLE_MOVABLE] = 0;
     lritem_style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
+    stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
 
     //edge
-
-    stylesheet.putCellStyle(STYLE_STATE, state_style);
-    stylesheet.putCellStyle(STYLE_FINAL_STATE, final_state_style)
-    stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
+    let edge_style = stylesheet.createDefaultEdgeStyle();
+    edge_style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_CONNECTOR;
+    edge_style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_CLASSIC;
+    edge_style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE;
+    edge_style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+    edge_style[mxConstants.STYLE_STROKECOLOR] = COLOR_EDGE;
+    edge_style[mxConstants.STYLE_FONTCOLOR] = COLOR_FONT;
     stylesheet.putCellStyle(STYLE_EDGE, edge_style);
+
+    //show id
+    let showid_style = {};
+    showid_style[mxConstants.STYLE_MOVABLE] = 0;
+    showid_style[mxConstants.STYLE_EDITABLE] = 0;
+    showid_style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
+    showid_style[mxConstants.STYLE_STROKECOLOR] = 'none';
+    showid_style[mxConstants.STYLE_FILLCOLOR] = COLOR_ID;
+    showid_style[mxConstants.STYLE_FONTCOLOR] = COLOR_FONT;
+    showid_style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+    stylesheet.putCellStyle(STYLE_SHOW_ID, showid_style);
+
+    I('mxCanvas').style.backgroundColor = COLOR_BACKGROUND;
 }
 
 function addListeners(graph) {
@@ -145,7 +180,7 @@ function addListeners(graph) {
         },
     });
 
-    //redraw start indicator
+    //redraw start indicator / hide state ids
     graph.addListener(mxEvent.CELLS_MOVED, (_, evt) => {
         const cells = evt.getProperty('cells');
         for (const cell of cells) {
@@ -153,6 +188,7 @@ function addListeners(graph) {
                 redrawStartIndicator(graph);
             }
         }
+        hideIDs();
     });
 
     //visibility of the action commands, like toggle final state or delete state
@@ -187,7 +223,7 @@ function addListeners(graph) {
     document.addEventListener('keydown', evt => {
         switch (evt.key) {
             case 'Delete':
-                deletedStates();
+                deleteStates();
                 break;
             case 'f':
                 toggleFinalStates();
@@ -199,6 +235,23 @@ function addListeners(graph) {
     });
 }
 
+/**
+ * register some callbacks for the serialization, which cannot register themself
+ * @param graph mxGraph
+ */
+function registerCallbacks(graph) {
+    executeBeforeSerialize(graph, hideErrors);
+    executeBeforeSerialize(graph, hideIDs);
+}
+
+/**
+ * Parses the grammar and initializes the graph with the grammar
+ * If there is an error in the grammar, no graph will be created,
+ * however the error messages will be displayed in the grammarDOM
+ *
+ * @param plainGrammar Grammar description
+ * @param lr0 int to represent the lr type, 0 or 1 is allowed
+ */
 function setGrammar(plainGrammar, lr0) {
     const lr = lr0 ? 0 : 1;
     const grammar = new Grammar(plainGrammar, lr);

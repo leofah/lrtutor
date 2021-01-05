@@ -67,13 +67,13 @@
     <div class="row">
 
       <!-- Canvas -->
-      <div class="col-9 border mt-3">
+      <div class="col-9 border mt-3 p-0">
         <div id="mxCanvas" style="height: 500px; overflow: auto"></div>
       </div>
       <!-- Show either actions or graph errors in the row -->
       <div id="graphActions" class="col-3 align-self-stretch">
         <div class="mt-1">
-          <button class="btn btn-info d-none " id="actionDelete" onclick="deletedStates()">
+          <button class="btn btn-info d-none " id="actionDelete" onclick="deleteStates()">
             Delete Elements (del)
           </button>
         </div>
@@ -89,12 +89,14 @@
         </div>
       </div>
 
-      <div id="graphErrors" class="col-3" style="height: 500px; overflow: auto"></div>
+      <div id="graphErrors" class="col-3 d-none" style="height: 500px; overflow: auto"></div>
     </div>
 
     <div class="mt-1">
       <button class="btn btn-success" onclick="checkGraph()">Check Graph</button>
       <button class="btn btn-outline-success" onclick="hideErrors()">Hide Errors</button>
+      <button class="btn btn-outline-info" onclick="showIDs()">Show State IDs</button>
+      <button class="btn btn-outline-info" onclick="hideIDs()">Hide State IDs</button>
     </div>
   </div>
 </div>

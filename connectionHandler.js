@@ -26,6 +26,9 @@ class connectionHandler {
 
         this.addListeners();
         this.addTerminalButtons();
+
+        //register callback to hide preview before save
+        executeBeforeSerialize(graph, this.hide.bind(this));
     }
 
     /**

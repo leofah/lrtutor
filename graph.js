@@ -85,7 +85,7 @@ function setStartStateIntern(graph, state) {
     const geo = state.getGeometry();
     const source = graph.insertVertex(graph.getDefaultParent(), null, null,
         geo.x - 30, geo.y + geo.height / 2, 0, 0);
-    const startIndicator = graph.insertEdge(graph.getDefaultParent(), null, null, source, state);
+    const startIndicator = graph.insertEdge(graph.getDefaultParent(), null, null, source, state, STYLE_EDGE);
     graph.startState = state;
     graph.getModel().remove(graph.startIndicatorSource);
     graph.startIndicatorSource = source;
@@ -125,7 +125,7 @@ function toggleFinalStates() {
  * deletes the selected states and edges
  * connected edges are deleted as well
  */
-function deletedStates() {
+function deleteStates() {
     const selection = graph.getSelectionCells()
     graph.getModel().beginUpdate();
     try {
@@ -139,4 +139,64 @@ function deletedStates() {
     } finally {
         graph.getModel().endUpdate();
     }
+}
+
+let stateIds = new Map();
+let stateIdVertexes = [];
+
+/**
+ * Generates numerical ids, starting from 1, for the states and shows the ids on the canvas.
+ * mxGraph cells already have ids, however the numbers can get quite large, so these
+ * ids are only used to notify the user, all other ids are always built in mxCell ids.
+ */
+function showIDs() {
+    hideIDs();
+    //generate ids
+    const ids = new Map();
+    let i = 0;
+    for (const cell of Object.values(graph.getModel().cells)) {
+        if (cell.getType() !== STYLE_STATE) continue;
+        ids.set(cell.id, ++i);
+    }
+    //show ids in graph
+    const vertexes = [];
+    graph.getModel().beginUpdate();
+    try {
+        for (const [cellId, i] of ids) {
+            const h = LRITEM_HEIGHT;
+            const geo = graph.getModel().getCell(cellId).geometry;
+            const v = graph.insertVertex(graph.getDefaultParent(), null, i,
+                geo.x - h / 2, geo.y - h / 2, h, h, STYLE_SHOW_ID);
+            vertexes.push(v);
+        }
+    } finally {
+        graph.getModel().endUpdate();
+    }
+
+    stateIds = ids;
+    stateIdVertexes = vertexes;
+}
+
+/**
+ * deletes the shown ids of the states
+ */
+function hideIDs() {
+    graph.getModel().beginUpdate();
+    try {
+        graph.removeCells(stateIdVertexes);
+    } finally {
+        graph.getModel().endUpdate();
+    }
+    stateIds = new Map();
+    stateIdVertexes = [];
+}
+
+/**
+ * returns the shown ID of the given state
+ * This only works if the ids are currently shown
+ * @param cellId of the State
+ * @return int id of given state or undefined
+ */
+function getIdForCell(cellId) {
+    return stateIds.get(cellId);
 }

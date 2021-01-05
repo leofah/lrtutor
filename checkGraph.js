@@ -1,5 +1,7 @@
 const errorHighlights = [];
 
+// TODO add help why the graph is not correct
+
 function checkGraph() {
     hideErrors();
     const lrCheck = checkCorrectLrItems(graph);
@@ -9,6 +11,10 @@ function checkGraph() {
     const correctStart = checkStartState(graph);
     const connected = checkConnected(graph);
     const duplicates = checkDuplicateStated(graph);
+
+
+    //get Cell Ids
+    showIDs();
 
     //highlight errors:
     for (const cell of lrCheck.incorrect.concat(closureCheck.incorrect).concat(transitionCheck.incorrect)) {
@@ -50,13 +56,13 @@ function checkGraph() {
 
         if (extraTransitions.length > 0) {
             everythingCorrect = false;
-            let message = "State " + cellID + " has to many outgoing transitions with (non)terminals: " +
+            let message = "State " + getIdForCell(cellID) + " has to many outgoing transitions with (non)terminals: " +
                 extraTransitions.join(', ')
             addNode(message, errorElement, CLASSES_ERROR)
         }
         if (missingTransitions.length > 0) {
             everythingCorrect = false;
-            let message = "State " + cellID + " misses transitions with following (non)terminals: " +
+            let message = "State " + getIdForCell(cellID) + " misses transitions with following (non)terminals: " +
                 missingTransitions.join(', ')
             addNode(message, errorElement, CLASSES_ERROR)
         }
@@ -67,14 +73,14 @@ function checkGraph() {
     if (finalCheck.incorrect.length > 0) {
         everythingCorrect = false;
         const message = "Not all states have the correct final status: " +
-            finalCheck.incorrect.map(cell => cell.id).join(', ');
+            finalCheck.incorrect.map(cell => getIdForCell(cell.id)).join(', ');
         addNode(message, errorElement, CLASSES_ERROR)
     }
     // graph connected
     if (connected.incorrect.length > 0) {
         everythingCorrect = false;
         const message = "Not all states are connected to the start state: " +
-            connected.incorrect.map(cell => cell.id).join(', ');
+            connected.incorrect.map(cell => getIdForCell(cell.id)).join(', ');
         addNode(message, errorElement, CLASSES_WARNING)
     }
     // duplicates
@@ -82,7 +88,7 @@ function checkGraph() {
         everythingCorrect = false;
         let message = "There are duplicate states in the graph: ";
         for (const key in duplicates) {
-            message = message + duplicates[key].join(', ')
+            message = message + duplicates[key].map(id => getIdForCell(id)).join(', ');
         }
         addNode(message, errorElement, CLASSES_WARNING)
     }
@@ -110,6 +116,7 @@ function hideErrors() {
     const errorElement = I("graphErrors");
     while (errorElement.childElementCount > 0) errorElement.removeChild(errorElement.firstChild);
     errorElement.classList.add("d-none");
+    hideIDs();
 }
 
 /**
