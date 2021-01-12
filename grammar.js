@@ -302,8 +302,16 @@ class Grammar {
         return result;
     }
 
+
+    /**
+     * shifts the dot in an parsed LR Item
+     * @param parsedItem
+     * @return {({left: *, right1: *, right2: *}|*)[]|undefined}
+     *      undefined: if the item is final and thus cannot be shifted
+     *      res[1]: The (non)terminal, that got shifted
+     */
     shiftLrItem(parsedItem) {
-        if (parsedItem.right2.length === 0) return;
+        if (parsedItem.right2.length === 0) return undefined;
         const shiftTerm = parsedItem.right2[0];
         const item = {
             'left': parsedItem.left,

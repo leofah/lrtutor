@@ -131,9 +131,8 @@ function deleteStates() {
     try {
         for (const cell of selection) {
             if (cell.getType() === STYLE_STATE || cell.getType() === STYLE_EDGE) {
-                if (graph.startState !== cell) { //start state cannot be deleted
-                    graph.getModel().remove(cell);
-                }
+                if (graph.startState !== cell)  //start state cannot be deleted
+                    graph.removeCells([cell]);
             }
         }
     } finally {
@@ -156,7 +155,7 @@ function showIDs() {
     let i = 0;
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
-        ids.set(cell.id, ++i);
+        ids.set(cell.id, i++);
     }
     //show ids in graph
     const vertexes = [];
@@ -199,4 +198,10 @@ function hideIDs() {
  */
 function getIdForCell(cellId) {
     return stateIds.get(cellId);
+}
+
+function layout() {
+    let layout = new mxFastOrganicLayout(graph);
+    layout.forceConstant = 150;
+    layout.execute(graph.getDefaultParent());
 }

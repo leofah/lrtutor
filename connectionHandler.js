@@ -37,15 +37,18 @@ class connectionHandler {
      */
     addListeners() {
         //When one cell is selected, the user can choose a terminal to create a new transition
+        //otherwise the handler is reset
         this.graph.getSelectionModel().addListener(mxEvent.CHANGE, (_, evt) => {
             const selectedCells = this.graph.getSelectionCells();
             if (selectedCells.length === 1) {
                 let cell = selectedCells[0];
                 while (cell != null && cell.getType() !== STYLE_STATE) cell = cell.getParent();
-                if (cell != null) this.setStartState(cell);
-            } else if (!this.terminal) {
-                this.abort();
+                if (cell != null) {
+                    this.setStartState(cell)
+                    return;
+                }
             }
+            this.abort();
         });
         //handle the creation of the new transition
         this.graph.addListener(mxEvent.CLICK, (_, evt) => {
@@ -67,8 +70,6 @@ class connectionHandler {
 
                 this.setEndState(targetCell);
                 evt.consume();
-            } else if (this.startState != null && evt.getProperty('cell') == null) {
-                this.abort();
             }
         });
 
@@ -88,6 +89,7 @@ class connectionHandler {
      * Creates the shapes for the preview edge
      */
     createPreview() {
+        this.removePreview();
         //start Point of the edge
         const geo = this.startState.getGeometry();
         const x = geo.x + 0.5 * geo.width;
@@ -103,6 +105,7 @@ class connectionHandler {
         const terminal = new mxText(this.terminal, null, null, null, '#0000ff');
         terminal.dialect = this.graph.dialect;
         terminal.init(this.graph.getView().getBackgroundPane());
+        terminal.value = this.terminal;
         this.previewTerminal = terminal;
         //state
         const state = new mxRectangleShape(null, null, '#0000ff')
@@ -202,18 +205,16 @@ class connectionHandler {
     }
 
     /**
-     * Show preview edge and buttons in the DOM.
+     * Show terminal buttons in the DOM.
      */
     show() {
-        this.createPreview();
         this.domElement.classList.remove('d-none');
     }
 
     /**
-     * Remove preview edge and buttons in the DOM.
+     * Remove terminal buttons in the DOM.
      */
     hide() {
-        this.removePreview();
         this.domElement.classList.add('d-none');
     }
 
@@ -224,7 +225,7 @@ class connectionHandler {
     setStartState(state) {
         if (this.terminal) return;
         this.startState = state;
-        this.show()
+        this.show();
     }
 
     /**
@@ -235,7 +236,9 @@ class connectionHandler {
     useTerminal(x) {
         if (this.startState) {
             this.terminal = x;
-            this.previewTerminal.value = x;
+            this.createPreview();
+            //don't move cells while adding a new transition
+            this.graph.graphHandler.setMoveEnabled(false);
         }
     }
 
@@ -257,8 +260,9 @@ class connectionHandler {
      */
     abort() {
         this.hide();
+        this.removePreview();
         this.startState = null;
         this.terminal = null;
+        this.graph.graphHandler.setMoveEnabled(true);
     }
-
 }

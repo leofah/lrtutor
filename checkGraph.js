@@ -280,11 +280,11 @@ function checkTransitions(graph) {
             const key = e[0];
             const targetID = key.split(' ')[0];
             const terminal = key.split(' ')[1];
-            const shiftedItem = e[1];
+            const shiftedItems = e[1];
             const targetState = graph.getModel().getCell(targetID);
             const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
 
-            const closure = graph.grammar.computeEpsilonClosure(shiftedItem)
+            const closure = graph.grammar.computeEpsilonClosure(shiftedItems)
 
             const lrItems = [];
             for (const lrItem of targetState.children) {

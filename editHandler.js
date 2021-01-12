@@ -62,7 +62,6 @@ class editHandler {
             this.editState(state);
         } else {
             this.resizeState(state);
-            graph.setSelectionCell(state);
         }
     }
 

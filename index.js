@@ -71,7 +71,8 @@ function initGraph(grammar) {
     g.setCellsResizable(false);
     g.setCellsCloneable(false);
     g.setAllowNegativeCoordinates(false);
-    g.foldingEnabled = false;
+    g.setCellsDisconnectable(false); //don't allow edges to be move to different states
+    g.foldingEnabled = false; //dont' show the folding action/icon in nested cells (states)
 
     //own Setup
     g.grammar = grammar;
@@ -116,8 +117,8 @@ function setStylesheet(graph) {
     lritem_style[mxConstants.STYLE_FONTCOLOR] = COLOR_FONT;
     lritem_style[mxConstants.STYLE_STROKECOLOR] = 'none';
     lritem_style[mxConstants.STYLE_FILL_OPACITY] = 0;
-    lritem_style[mxConstants.STYLE_MOVABLE] = 0;
     lritem_style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT;
+    lritem_style[mxConstants.STYLE_MOVABLE] = 0;
     stylesheet.putCellStyle(STYLE_LR_ITEM, lritem_style);
 
     //edge
@@ -128,6 +129,8 @@ function setStylesheet(graph) {
     edge_style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
     edge_style[mxConstants.STYLE_STROKECOLOR] = COLOR_EDGE;
     edge_style[mxConstants.STYLE_FONTCOLOR] = COLOR_FONT;
+    edge_style[mxConstants.STYLE_MOVABLE] = 0;
+    edge_style[mxConstants.STYLE_EDITABLE] = 0;
     stylesheet.putCellStyle(STYLE_EDGE, edge_style);
 
     //show id
@@ -218,6 +221,9 @@ function addListeners(graph) {
         else aToggle.classList.add("d-none");
 
     });
+
+    //rectangular selection
+    graph.addMouseListener(new mxRubberband(graph));
 
     //keyboard listener
     document.addEventListener('keydown', evt => {
