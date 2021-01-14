@@ -67,6 +67,7 @@ function addStartState(graph) {
 
         // set start state and add startIndicator edge
         setStartStateIntern(graph, startState);
+        graph.editHandler.resizeState(startState);
     } finally {
         graph.getModel().endUpdate();
     }

@@ -24,7 +24,7 @@ class Grammar {
         this.terminals = [];
         this.nonTerminals = [];
         this.productions = [];
-        this.lrItemMap = {};
+        this.lrItemMap = new Map();
 
         // parse helper
         this._someTerminal = [];
@@ -127,11 +127,11 @@ class Grammar {
      @return {left, right1, right2, lookahead} if everything is alright, else 'false'
      */
     parseLRItem(itemText) {
-        if (this.lrItemMap[itemText] !== undefined) {
-            return this.lrItemMap[itemText];
+        if (this.lrItemMap.has(itemText)) {
+            return this.lrItemMap.get(itemText);
         }
         const result = this.parseLRItemHelp(itemText);
-        this.lrItemMap[itemText] = result;
+        this.lrItemMap.set(itemText, result);
         return result;
     }
 
@@ -218,15 +218,15 @@ class Grammar {
 
     /**
      * Computes the Epsilon Closure of given LR Items
-     * LRItems: [A->a.b, B->.A]
-     * @return list of LRItem texts which are in the closure of the given LR ITems
+     * @param lrItems: [A->a.b, B->.A] list of parsed LR Items
+     * @return list of parsed LRItem texts which are in the closure of the given LR Items
      */
     computeEpsilonClosure(lrItems) {
         let workQueue = [];
         let closure = [];
         for (const parsedItem of lrItems) {
             if (parsedItem === false || parsedItem === undefined) continue;
-            workQueue.push(parsedItem);
+            workQueue.push({...parsedItem});
         }
 
         while (workQueue.length !== 0) {
