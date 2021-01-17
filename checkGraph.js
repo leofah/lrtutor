@@ -23,17 +23,17 @@ function checkGraph() {
     showIDs();
 
     //show the errors
+    // &&= does not work due to fast evaluation of boolean operators
     //errors shown on the canvas
-    // &&= does not work due to fas evaluation of boolean operators
     let everythingCorrect = showLRItemsErrors(lrCheck);
     everythingCorrect = showClosureErrors(closureCheck) && everythingCorrect;
     everythingCorrect = showTransitionCanvasErrors(transitionCheck) && everythingCorrect;
     let errorOnCanvas = !everythingCorrect;
     //errors shown on the side element
-    everythingCorrect = showCanvasError(errorOnCanvas) && everythingCorrect;
+    everythingCorrect = showCanvasErrors(errorOnCanvas) && everythingCorrect;
     everythingCorrect = showTransitionErrors(transitionCheck) && everythingCorrect;
     everythingCorrect = showFinalStatesErrors(finalCheck) && everythingCorrect;
-    everythingCorrect = showStartError(correctStart) && everythingCorrect;
+    everythingCorrect = showStartErrors(correctStart) && everythingCorrect;
     everythingCorrect = showConnectedErrors(connected) && everythingCorrect;
     everythingCorrect = showDuplicatesErrors(duplicates) && everythingCorrect;
     showCorrect(everythingCorrect);
@@ -55,12 +55,12 @@ function checkGraph() {
  */
 
 function showLRItemsErrors(lrCheck) {
-    //TODO
+    mxUtils.setCellStyles(graph.getModel(), lrCheck.incorrect, mxConstants.STYLE_FONTCOLOR, COLOR_FONT_ERROR);
     return lrCheck.incorrect.length === 0;
 }
 
 function showClosureErrors(closureCheck) {
-    //TODO
+    mxUtils.setCellStyles(graph.getModel(), closureCheck.incorrect, mxConstants.STYLE_FILLCOLOR, COLOR_STATE_ERROR);
     return closureCheck.incorrect.length === 0;
 }
 
@@ -68,14 +68,15 @@ function showClosureErrors(closureCheck) {
  * shows wrong transitions on the canvas
  */
 function showTransitionCanvasErrors(transitionCheck) {
-    //TODO
+    mxUtils.setCellStyles(graph.getModel(), transitionCheck.incorrect, mxConstants.STYLE_STROKECOLOR, COLOR_EDGE_ERROR);
+    mxUtils.setCellStyles(graph.getModel(), transitionCheck.incorrect, mxConstants.STYLE_FONTCOLOR, COLOR_FONT_ERROR);
     return transitionCheck.incorrect.length === 0;
 }
 
 /**
  * shows a message if an error was marked on the canvas.
  */
-function showCanvasError(errorOnCanvas) {
+function showCanvasErrors(errorOnCanvas) {
     let everythingCorrect = true;
     if (errorOnCanvas) {
         everythingCorrect = false;
@@ -88,7 +89,7 @@ function showCanvasError(errorOnCanvas) {
     return everythingCorrect;
 }
 
-function showStartError(correctStart) {
+function showStartErrors(correctStart) {
     if (!correctStart) {
         addNode("The start state is not correct or missing",
             "The start state needs the LR-Item '" + graph.grammar.getStartLRItemText() + "', maybe you deleted it",
@@ -148,11 +149,11 @@ function showConnectedErrors(connected) {
 
 function showDuplicatesErrors(duplicates) {
     let everythingCorrect = true;
-    if (Object.keys(duplicates).length > 0) {
+    if (duplicates.size > 0) {
         everythingCorrect = false;
         let message = "There are duplicate states in the graph: ";
-        for (const key in duplicates) {
-            message = message + '[' + duplicates[key].map(id => getIdForCell(id)).join(', ') + '] ';
+        for (const key of duplicates.keys()) {
+            message = message + '[' + duplicates.get(key).map(id => getIdForCell(id)).join(', ') + '] ';
         }
         addNode(message, "Duplicate states are not critical, but they make the automaton larger than needed. " +
             "Consider moving all transitions to one of the duplicate states and delete the other states." +
@@ -179,8 +180,22 @@ function addNode(message, tooltip, classes) {
     errorElement.appendChild(div);
 }
 
-/*  */
+/**
+ * Hides all the elements that indicate errors
+ * These elements were added by check graph and so all the show...Errors functions
+ */
 function hideErrors() {
+    //Clear Canvas
+    const cells = []
+    for (const cell in graph.getModel().cells) {
+        cells.push(graph.getModel().cells[cell]);
+    }
+    mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_LR_ITEM), mxConstants.STYLE_FONTCOLOR, null);
+    mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_STATE), mxConstants.STYLE_FILLCOLOR, null);
+    mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_EDGE), mxConstants.STYLE_STROKECOLOR, null);
+    mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_EDGE), mxConstants.STYLE_FONTCOLOR, null);
+
+    //clear DOM element
     while (errorElement.childElementCount > 0) errorElement.removeChild(errorElement.firstChild);
     errorElement.classList.add("d-none");
     hideIDs();
@@ -433,26 +448,32 @@ function checkConnected(graph) {
  * @param graph
  * @return  map of representative states to set all states, which are a duplicate of the representative
  */
-
 function checkDuplicateStated(graph) {
-    const duplicates = {};  //result map: representative -> set of duplicate states
-    const presentStates = {}; //stores present states as key. The value is the cell id
+    const duplicates = new Map();  //result map: representative -> set of duplicate states
+    const reprStates = new Map(); //stores representative states as key. The value is the cell id
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        const lrItems = [];
+        const lrItems = new Set();
         for (const lrItem of cell.children) {
             if (lrItem.getType() !== STYLE_LR_ITEM) continue;
             const parsedItem = graph.grammar.parseLRItem(lrItem.value);
             if (parsedItem)
-                lrItems.push(graph.grammar.itemToText(parsedItem));
+                lrItems.add(graph.grammar.itemToText(parsedItem));
         }
 
-        lrItems.sort();
-        const otherCellId = presentStates[lrItems];
-        if (otherCellId === undefined) presentStates[lrItems] = cell.id;
-        else if (duplicates[otherCellId] === undefined) duplicates[otherCellId] = [presentStates[lrItems], cell.id];
-        else duplicates[otherCellId].push(cell.id);
+        const rep = Array.from(lrItems).sort().toString();
+        if (!reprStates.has(rep)) {
+            //set representative but the state is not yet duplicate
+            reprStates.set(rep, cell.id);
+            continue;
+        }
+        const otherCellId = reprStates.get(rep); //found other cell with same lritems
+        if (!duplicates.has(otherCellId)) {
+            duplicates.set(otherCellId, [reprStates.get(rep), cell.id]);
+        } else {
+            duplicates.get(reprStates.get(rep)).push(cell.id);
+        }
 
     }
     return duplicates;

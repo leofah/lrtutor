@@ -9,11 +9,14 @@ const STYLE_SHOW_ID = 'showid';
 
 //Colors for the elements
 const COLOR_FONT = '#363D45';
+const COLOR_FONT_ERROR = '#FF0000';
 const COLOR_STATE = '#93E4F1';
+const COLOR_STATE_ERROR = '#F8D7DA';
 const COLOR_STATE_BORDER = '#0E606C';
 const COLOR_EDGE = '#073036';
+const COLOR_EDGE_ERROR = '#FF0000';
 const COLOR_ID = '#F8F991';
-const COLOR_BACKGROUND = '#F5F5F4'
+const COLOR_BACKGROUND = '#F5F5F4';
 
 //Set Pixel Values for States and Items
 const STATE_MARGIN = 10;
