@@ -33,7 +33,10 @@ document.write('<script src="checkGraph.js"></script>')
 document.write('<script src="utils.js"></script>')
 document.write('<script src="io.js"></script>')
 
-//add prototype function for cell to get the type (state, LR-Item) of the cell
+/** prototype function for cell to get the type (state, LR-Item) of the cell
+ * the style cannot be returned as name, as it ccan contain overwritten information, like a new color
+ * However the Type Names need to be designed s.t. none includes another
+ */
 mxCell.prototype.getType = function () {
     const style = this.getStyle()
     if (!style) {
@@ -44,6 +47,8 @@ mxCell.prototype.getType = function () {
         return STYLE_STATE;
     } else if (style.includes(STYLE_EDGE)) {
         return STYLE_EDGE;
+    } else if (style.includes(STYLE_SHOW_ID)) {
+        return STYLE_SHOW_ID;
     }
     return '';
 }
@@ -186,7 +191,7 @@ function addListeners(graph) {
         },
     });
 
-    //redraw start indicator / hide state ids
+    //redraw start indicator
     graph.addListener(mxEvent.CELLS_MOVED, (_, evt) => {
         const cells = evt.getProperty('cells');
         for (const cell of cells) {
@@ -194,7 +199,6 @@ function addListeners(graph) {
                 redrawStartIndicator(graph);
             }
         }
-        hideIDs();
     });
 
     //visibility of the action commands, like toggle final state or delete state
@@ -225,6 +229,24 @@ function addListeners(graph) {
 
     });
 
+    // handle stateIds placement
+    graph.addListener(null, (_, evt) => {
+        if (evt.name === mxEvent.MOVE_CELLS) {
+            //move indicator
+            const cells = evt.getProperty('cells');
+            for (const cell of cells.filter(c => c.getType() === STYLE_STATE)) {
+                moveStateId(cell.getId());
+            }
+        }
+        if (evt.name === mxEvent.ADD_CELLS || evt.name === mxEvent.REMOVE_CELLS) {
+            //generate new indicators
+            const cells = evt.getProperty('cells');
+            if (cells.filter(c => c.getType() === STYLE_STATE).length > 0) {
+                showIDs(graph);
+            }
+        }
+    });
+
     //rectangular selection
     graph.addMouseListener(new mxRubberband(graph));
 
@@ -250,7 +272,6 @@ function addListeners(graph) {
  */
 function registerCallbacks(graph) {
     executeBeforeSerialize(graph, hideErrors);
-    executeBeforeSerialize(graph, hideIDs);
 }
 
 /**

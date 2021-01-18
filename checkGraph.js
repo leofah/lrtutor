@@ -19,9 +19,6 @@ function checkGraph() {
     const connected = checkConnected(graph);
     const duplicates = checkDuplicateStated(graph);
 
-    //enable get Cell Ids
-    showIDs();
-
     //show the errors
     // &&= does not work due to fast evaluation of boolean operators
     //errors shown on the canvas
@@ -198,7 +195,6 @@ function hideErrors() {
     //clear DOM element
     while (errorElement.childElementCount > 0) errorElement.removeChild(errorElement.firstChild);
     errorElement.classList.add("d-none");
-    hideIDs();
 }
 
 /**

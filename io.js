@@ -81,6 +81,9 @@ function deSerializeGraph(serial) {
         graph.ownConnectionHandler.abort();
         graph.ownConnectionHandler.addTerminalButtons();
 
+        //show state IDs
+        showIDs(graph);
+
         hideErrors();
     } catch (e) {
         return "Invalid File Format: " + e;

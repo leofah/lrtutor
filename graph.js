@@ -142,15 +142,14 @@ function deleteStates() {
 }
 
 let stateIds = new Map();
-let stateIdVertexes = [];
 
 /**
- * Generates numerical ids, starting from 1, for the states and shows the ids on the canvas.
+ * Generates numerical ids, starting from 0, for the states and shows the ids on the canvas.
  * mxGraph cells already have ids, however the numbers can get quite large, so these
  * ids are only used to notify the user, all other ids are always built in mxCell ids.
  */
-function showIDs() {
-    hideIDs();
+function showIDs(graph) {
+    hideIDs(graph);
     //generate ids
     const ids = new Map();
     let i = 0;
@@ -159,7 +158,6 @@ function showIDs() {
         ids.set(cell.id, i++);
     }
     //show ids in graph
-    const vertexes = [];
     graph.getModel().beginUpdate();
     try {
         for (const [cellId, i] of ids) {
@@ -167,28 +165,42 @@ function showIDs() {
             const geo = graph.getModel().getCell(cellId).geometry;
             const v = graph.insertVertex(graph.getDefaultParent(), null, i,
                 geo.x - h / 2, geo.y - h / 2, h, h, STYLE_SHOW_ID);
-            vertexes.push(v);
+            stateIds.set(cellId, v);
         }
     } finally {
         graph.getModel().endUpdate();
     }
-
-    stateIds = ids;
-    stateIdVertexes = vertexes;
 }
 
 /**
  * deletes the shown ids of the states
  */
-function hideIDs() {
+function hideIDs(graph) {
     graph.getModel().beginUpdate();
     try {
-        graph.removeCells(stateIdVertexes);
+        for (const cell of Object.values(graph.getModel().cells)) {
+            if (cell.getType() !== STYLE_SHOW_ID) continue;
+            graph.removeCells([cell]);
+        }
     } finally {
         graph.getModel().endUpdate();
     }
     stateIds = new Map();
-    stateIdVertexes = [];
+}
+
+/**
+ * moves the state id indicator
+ * @param cellId
+ */
+function moveStateId(cellId) {
+    if (!stateIds.has(cellId)) return;
+    const id = stateIds.get(cellId);
+    const geoCell = graph.getModel().getCell(cellId).getGeometry();
+    const geo= id.getGeometry().clone();
+    geo.x = geoCell.x - LRITEM_HEIGHT / 2;
+    geo.y = geoCell.y - LRITEM_HEIGHT / 2;
+    graph.getModel().setGeometry(id, geo);
+
 }
 
 /**
@@ -198,7 +210,7 @@ function hideIDs() {
  * @return int id of given state or undefined
  */
 function getIdForCell(cellId) {
-    return stateIds.get(cellId);
+    return stateIds.get(cellId)?.value;
 }
 
 function layout() {
