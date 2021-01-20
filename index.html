@@ -60,8 +60,8 @@
 
   <h3 class="mt-3">Graph</h3>
   <div>
-    <button class="btn btn-outline-success d-none" id="saveGraph" onclick="saveGraph()">Save Graph to disk</button>
-    <button class="btn btn-outline-danger" id="loadGraph" onclick="loadGraph()">Load Graph from disk</button>
+    <button class="btn btn-outline-success d-none" id="saveGraph" onclick="saveGraph()">Save Automaton to disk</button>
+    <button class="btn btn-outline-danger" id="loadGraph" onclick="loadGraph()">Load Automaton from disk</button>
     <a href="exampleGraphs">Here</a> are some example graphs.
   </div>
   <div class="d-none" id="graphContent">
@@ -96,7 +96,7 @@
     <div class="mt-1">
       <button class="btn btn-success" onclick="checkGraph()">Check Graph</button>
       <button class="btn btn-outline-success" onclick="hideErrors()">Hide Errors</button>
-      <button class="btn btn-outline-info" onclick="layout()">Layout graph</button>
+      <button class="btn btn-danger" id="resetCanvas" onclick="resetCanvas()">Reset Automaton</button>
     </div>
   </div>
 </div>

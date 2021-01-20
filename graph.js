@@ -196,7 +196,7 @@ function moveStateId(cellId) {
     if (!stateIds.has(cellId)) return;
     const id = stateIds.get(cellId);
     const geoCell = graph.getModel().getCell(cellId).getGeometry();
-    const geo= id.getGeometry().clone();
+    const geo = id.getGeometry().clone();
     geo.x = geoCell.x - LRITEM_HEIGHT / 2;
     geo.y = geoCell.y - LRITEM_HEIGHT / 2;
     graph.getModel().setGeometry(id, geo);
@@ -213,8 +213,14 @@ function getIdForCell(cellId) {
     return stateIds.get(cellId)?.value;
 }
 
-function layout() {
-    let layout = new mxFastOrganicLayout(graph);
-    layout.forceConstant = 150;
-    layout.execute(graph.getDefaultParent());
+function resetCanvas() {
+    //delete all states and add the start state again
+    graph.getModel().beginUpdate();
+    try {
+        graph.getModel().clear();
+        addStartState(graph);
+    } finally {
+        graph.getModel().endUpdate();
+
+    }
 }

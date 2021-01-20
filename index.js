@@ -34,7 +34,7 @@ document.write('<script src="utils.js"></script>')
 document.write('<script src="io.js"></script>')
 
 /** prototype function for cell to get the type (state, LR-Item) of the cell
- * the style cannot be returned as name, as it ccan contain overwritten information, like a new color
+ * cell.style cannot be returned as name, as it can contain overwritten style information, like a new color
  * However the Type Names need to be designed s.t. none includes another
  */
 mxCell.prototype.getType = function () {
