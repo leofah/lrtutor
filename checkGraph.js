@@ -17,7 +17,9 @@ function checkGraph() {
     const finalCheck = checkFinalStates(graph);
     const correctStart = checkStartState(graph);
     const connected = checkConnected(graph);
-    const duplicates = checkDuplicateStated(graph);
+    const duplicateStates = checkDuplicateStates(graph);
+    const duplicateItems = checkDuplicateLRItems(graph);
+
 
     //show the errors
     // &&= does not work due to fast evaluation of boolean operators
@@ -25,14 +27,15 @@ function checkGraph() {
     let everythingCorrect = showLRItemsErrors(lrCheck);
     everythingCorrect = showClosureErrors(closureCheck) && everythingCorrect;
     everythingCorrect = showTransitionCanvasErrors(transitionCheck) && everythingCorrect;
+    everythingCorrect = showStartErrors(correctStart) && everythingCorrect;
     let errorOnCanvas = !everythingCorrect;
     //errors shown on the side element
     everythingCorrect = showCanvasErrors(errorOnCanvas) && everythingCorrect;
     everythingCorrect = showTransitionErrors(transitionCheck) && everythingCorrect;
     everythingCorrect = showFinalStatesErrors(finalCheck) && everythingCorrect;
-    everythingCorrect = showStartErrors(correctStart) && everythingCorrect;
     everythingCorrect = showConnectedErrors(connected) && everythingCorrect;
-    everythingCorrect = showDuplicatesErrors(duplicates) && everythingCorrect;
+    everythingCorrect = showDuplicateStatesErrors(duplicateStates) && everythingCorrect;
+    everythingCorrect = showDuplicateItemsErrors(duplicateItems) && everythingCorrect;
     showCorrect(everythingCorrect);
 
     //show the DOM elements
@@ -89,8 +92,11 @@ function showCanvasErrors(errorOnCanvas) {
 function showStartErrors(correctStart) {
     if (!correctStart) {
         addNode("The start state is not correct or missing",
-            "The start state needs the LR-Item '" + graph.grammar.getStartLRItemText() + "', maybe you deleted it",
+            "The start state needs to be <i>closure(" + graph.grammar.getStartLRItemText() + ")</i>. If the the " +
+            "canvas does not indicate an error with the closure, then to many items or lookaheads are written",
             CLASSES_ERROR);
+        const startEdge = graph.startIndicatorSource.edges;
+        mxUtils.setCellStyles(graph.getModel(), startEdge, mxConstants.STYLE_STROKECOLOR, COLOR_EDGE_ERROR);
     }
     return correctStart;
 }
@@ -144,7 +150,7 @@ function showConnectedErrors(connected) {
     return everythingCorrect;
 }
 
-function showDuplicatesErrors(duplicates) {
+function showDuplicateStatesErrors(duplicates) {
     let everythingCorrect = true;
     if (duplicates.size > 0) {
         everythingCorrect = false;
@@ -155,6 +161,22 @@ function showDuplicatesErrors(duplicates) {
         addNode(message, "Duplicate states are not critical, but they make the automaton larger than needed. " +
             "Consider moving all transitions to one of the duplicate states and delete the other states." +
             "Invalid LR Items are ignored when finding the duplicate states. ", CLASSES_WARNING);
+    }
+    return everythingCorrect;
+}
+
+function showDuplicateItemsErrors(duplicates) {
+    let everythingCorrect = true;
+    if (duplicates.size > 0) {
+        everythingCorrect = false;
+        let message = "There are duplicate LR-Items in some States. ";
+        const notes = [];
+        for (const key of duplicates.keys()) {
+            notes.push('State ' + getIdForCell(key) + ": " + duplicates.get(key) + "");
+        }
+        message += notes.join(", ");
+        addNode(message, "Duplicate LR Items are not critical, but they make a state unnecessary large." +
+            "Consider removing the duplicate items.", CLASSES_WARNING);
     }
     return everythingCorrect;
 }
@@ -183,10 +205,7 @@ function addNode(message, tooltip, classes) {
  */
 function hideErrors() {
     //Clear Canvas
-    const cells = []
-    for (const cell in graph.getModel().cells) {
-        cells.push(graph.getModel().cells[cell]);
-    }
+    const cells = Object.values(graph.getModel().cells);
     mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_LR_ITEM), mxConstants.STYLE_FONTCOLOR, null);
     mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_STATE), mxConstants.STYLE_FILLCOLOR, null);
     mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_EDGE), mxConstants.STYLE_STROKECOLOR, null);
@@ -209,6 +228,22 @@ function prepareGraph(graph) {
 }
 
 /************************ Check functions ***********************/
+
+/**
+ * return every lrItem of the given State as array.
+ * invalid lrItems are ignored
+ * @param state
+ * @return {mxCell[]}
+ */
+function getLRItems(state) {
+    const lrItems = [];
+    for (const lrItem of state.children) {
+        if (lrItem.getType() !== STYLE_LR_ITEM) continue;
+        const parsed = graph.grammar.parseLRItem(lrItem.value);
+        if (parsed !== false) lrItems.push(parsed)
+    }
+    return lrItems;
+}
 
 /**
  * Checks if each LR Item in the graph is correctly formatted
@@ -241,16 +276,8 @@ function checkCorrectClosure(graph) {
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        const lrItems = [];
-        for (const lrItem of cell.children) {
-            if (lrItem.getType() !== STYLE_LR_ITEM) continue;
-
-            if (graph.grammar.parseLRItem(lrItem.value) !== false)
-                lrItems.push(graph.grammar.parseLRItem(lrItem.value))
-        }
-
+        const lrItems = getLRItems(cell);
         const closure = graph.grammar.computeEpsilonClosure(lrItems);
-
         if (isSetsEqual(closure, lrItems))
             correct.push(cell);
         else {
@@ -325,15 +352,9 @@ function checkTransitions(graph) {
             const targetState = graph.getModel().getCell(targetID);
             const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
 
+            const lrItems = getLRItems(targetState);
             const closure = graph.grammar.computeEpsilonClosure(shiftedItems)
-
-            const lrItems = [];
-            for (const lrItem of targetState.children) {
-                if (lrItem.getType() !== STYLE_LR_ITEM) continue;
-                if (graph.grammar.parseLRItem(lrItem.value) !== false) lrItems.push((lrItem.value))
-            }
-
-            if (isSetsEqual(closure, lrItems.map(item => graph.grammar.parseLRItem(item))))
+            if (isSetsEqual(closure, lrItems))
                 correct.push(edge);
             else
                 incorrect.push(edge);
@@ -355,25 +376,16 @@ function checkTransitions(graph) {
 }
 
 /**
- * checks if the start state has the start production
- * @return boolean, whether the start state is correct
+ * checks if the start state is closure(startProduction)
+ * @return {boolean} true if the start state is correct
  */
 function checkStartState(graph) {
     const startState = graph.startState
     const startLRItem = graph.grammar.parseLRItem(graph.grammar.getStartLRItemText());
 
-    for (const lrItem of startState.children) {
-        if (lrItem.getType() !== STYLE_LR_ITEM) continue;
-        const parsed = graph.grammar.parseLRItem(lrItem.value);
-        if (graph.grammar.lr === 1) {
-            if (!parsed.lookahead.includes(DOLLAR)) continue;
-            parsed.lookahead = [DOLLAR]; // start LR Item only has DOLLAR in its lookahead
-        }
-        if (deepEqual(parsed, startLRItem)) {
-            return true;
-        }
-    }
-    return false;
+    const lrItems = getLRItems(startState);
+    const closure = graph.grammar.computeEpsilonClosure([startLRItem]);
+    return isSetsEqual(closure, lrItems);
 }
 
 /**
@@ -442,23 +454,18 @@ function checkConnected(graph) {
  * check if there are duplicate states with the same LRItems in the graph. This is not false for the canonical automaton,
  * however it is not the smallest possible graph and a nice feature to see irrelevant states
  * @param graph
- * @return  map of representative states to set all states, which are a duplicate of the representative
+ * @return {Map<string, string[]>} map of representative states to all states IDs, which are a duplicate of the representative
+ *         including the representative
  */
-function checkDuplicateStated(graph) {
-    const duplicates = new Map();  //result map: representative -> set of duplicate states
+function checkDuplicateStates(graph) {
+    const duplicates = new Map();  //result map: representative -> set of duplicate states IDs
     const reprStates = new Map(); //stores representative states as key. The value is the cell id
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        const lrItems = new Set();
-        for (const lrItem of cell.children) {
-            if (lrItem.getType() !== STYLE_LR_ITEM) continue;
-            const parsedItem = graph.grammar.parseLRItem(lrItem.value);
-            if (parsedItem)
-                lrItems.add(graph.grammar.itemToText(parsedItem));
-        }
-
-        const rep = Array.from(lrItems).sort().toString();
+        const lrItems = getLRItems(cell);
+        //clear string representation of all lrItems (sorted and no duplicates)
+        const rep = Array.from(new Set(lrItems.map(i => graph.grammar.itemToText(i)))).sort().toString();
         if (!reprStates.has(rep)) {
             //set representative but the state is not yet duplicate
             reprStates.set(rep, cell.id);
@@ -471,6 +478,29 @@ function checkDuplicateStated(graph) {
             duplicates.get(reprStates.get(rep)).push(cell.id);
         }
 
+    }
+    return duplicates;
+}
+
+/**
+ * check for states with duplicate LR Items
+ * @param graph
+ * @return {Map<int, Set<string>>} state id -> LR Items
+ */
+function checkDuplicateLRItems(graph) {
+    const duplicates = new Map(); //result map: state -> duplicate LR Items in this state
+    for (const cell of Object.values(graph.getModel().cells)) {
+        if (cell.getType() !== STYLE_STATE) continue;
+
+        const lrItems = getLRItems(cell).map(i => graph.grammar.itemToText(i));
+        const setItems = new Set(lrItems);
+        for (const item of setItems) {
+            delete lrItems[lrItems.indexOf(item)];
+        }
+        const duplicateItems = new Set(lrItems.filter(i => i !== undefined));
+        if (duplicateItems.size > 0) {
+            duplicates.set(cell.id, Array.from(duplicateItems));
+        }
     }
     return duplicates;
 }

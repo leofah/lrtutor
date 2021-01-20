@@ -4,101 +4,125 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" style="final" vertex="1" parent="1">
-          <mxGeometry x="50" y="50" width="100" height="80" as="geometry" />
+        <mxCell id="2" style="final" parent="1" vertex="1">
+          <mxGeometry x="50" y="50" width="80" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="S&#39;➜•S {$}" style="lritem" vertex="1" parent="2">
+        <mxCell id="3" value="S&#39;➜•S {$}" style="lritem" parent="2" vertex="1">
           <mxGeometry x="10" y="10" width="30" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="6" value="S➜•(S) {$, (, )}" style="lritem" vertex="1" parent="2">
-          <mxGeometry x="10" y="30" width="80" height="20" as="geometry" />
+        <mxCell id="6" value="S➜•(S) {$}" style="lritem" parent="2" vertex="1">
+          <mxGeometry x="10" y="30" width="60" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="7" value="S➜• {$, (, )}" style="lritem" vertex="1" parent="2">
-          <mxGeometry x="10" y="50" width="60" height="20" as="geometry" />
+        <mxCell id="7" value="S➜• {$}" style="lritem" parent="2" vertex="1">
+          <mxGeometry x="10" y="50" width="40" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="4" vertex="1" parent="1">
+        <mxCell id="4" parent="1" vertex="1">
           <mxGeometry x="20" y="90" as="geometry" />
         </mxCell>
-        <mxCell id="5" style="edge" edge="1" parent="1" source="4" target="2">
+        <mxCell id="5" style="edge;" parent="1" source="4" target="2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="10" style="final" vertex="1" parent="1">
-          <mxGeometry x="60" y="200" width="80" height="40" as="geometry" />
+        <mxCell id="10" style="final" parent="1" vertex="1">
+          <mxGeometry x="50" y="200" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="11" value="S&#39;➜S• {$}" style="lritem" vertex="1" parent="10">
+        <mxCell id="11" value="S&#39;➜S• {$}" style="lritem" parent="10" vertex="1">
           <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="12" value="S" style="edge" edge="1" parent="1" source="2" target="10">
+        <mxCell id="12" value="S" style="edge" parent="1" source="2" target="10" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="14" style="final" vertex="1" parent="1">
-          <mxGeometry x="230" y="50" width="100" height="80" as="geometry" />
+        <mxCell id="14" style="final" parent="1" vertex="1">
+          <mxGeometry x="230" y="50" width="80" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="15" value="S➜(•S) {$, (, )}" style="lritem" vertex="1" parent="14">
-          <mxGeometry x="10" y="10" width="80" height="20" as="geometry" />
+        <mxCell id="15" value="S➜(•S) {$}" style="lritem" parent="14" vertex="1">
+          <mxGeometry x="10" y="10" width="60" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="18" value="S➜•(S) {)}" style="lritem" vertex="1" parent="14">
+        <mxCell id="18" value="S➜•(S) {)}" style="lritem" parent="14" vertex="1">
           <mxGeometry x="10" y="30" width="50" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="19" value="S➜•{)}" style="lritem" vertex="1" parent="14">
+        <mxCell id="19" value="S➜•{)}" style="lritem" parent="14" vertex="1">
           <mxGeometry x="10" y="50" width="40" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="16" value="(" style="edge" edge="1" parent="1" source="2" target="14">
+        <mxCell id="16" value="(" style="edge;" parent="1" source="2" target="14" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="24" style="state" vertex="1" parent="1">
-          <mxGeometry x="230" y="190" width="100" height="40" as="geometry" />
+        <mxCell id="24" style="state" parent="1" vertex="1">
+          <mxGeometry x="230" y="190" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="25" value="S➜(S•) {$, (, )}" style="lritem" vertex="1" parent="24">
-          <mxGeometry x="10" y="10" width="80" height="20" as="geometry" />
+        <mxCell id="25" value="S➜(S•) {$}" style="lritem" parent="24" vertex="1">
+          <mxGeometry x="10" y="10" width="60" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="26" value="S" style="edge" edge="1" parent="1" source="14" target="24">
+        <mxCell id="26" value="S" style="edge;" parent="1" source="14" target="24" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="28" style="final" vertex="1" parent="1">
-          <mxGeometry x="230" y="280" width="100" height="40" as="geometry" />
+        <mxCell id="28" style="final" parent="1" vertex="1">
+          <mxGeometry x="230" y="280" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="29" value="S➜(S)• {$, (, )}" style="lritem" vertex="1" parent="28">
-          <mxGeometry x="10" y="10" width="80" height="20" as="geometry" />
+        <mxCell id="29" value="S➜(S)• {$}" style="lritem" parent="28" vertex="1">
+          <mxGeometry x="10" y="10" width="60" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="30" value=")" style="edge" edge="1" parent="1" source="24" target="28">
+        <mxCell id="30" value=")" style="edge" parent="1" source="24" target="28" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="37" style="final" vertex="1" parent="1">
+        <mxCell id="37" style="final" parent="1" vertex="1">
           <mxGeometry x="420" y="50" width="80" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="38" value="S➜(•S) {)}" style="lritem" vertex="1" parent="37">
+        <mxCell id="38" value="S➜(•S) {)}" style="lritem" parent="37" vertex="1">
           <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="40" value="S➜•(S) {)}" style="lritem" vertex="1" parent="37">
+        <mxCell id="40" value="S➜•(S) {)}" style="lritem" parent="37" vertex="1">
           <mxGeometry x="10" y="30" width="50" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="41" value="S➜• {)}" style="lritem" vertex="1" parent="37">
+        <mxCell id="41" value="S➜• {)}" style="lritem" parent="37" vertex="1">
           <mxGeometry x="10" y="50" width="40" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="39" value="(" style="edge" edge="1" parent="1" source="14" target="37">
+        <mxCell id="39" value="(" style="edge" parent="1" source="14" target="37" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="49" value="(" style="edge" edge="1" parent="1" source="37" target="37">
+        <mxCell id="49" value="(" style="edge" parent="1" source="37" target="37" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="50" style="state" vertex="1" parent="1">
+        <mxCell id="50" style="state" parent="1" vertex="1">
           <mxGeometry x="420" y="190" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="51" value="S➜(S•) {)}" style="lritem" vertex="1" parent="50">
+        <mxCell id="51" value="S➜(S•) {)}" style="lritem" parent="50" vertex="1">
           <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="52" value="S" style="edge" edge="1" parent="1" source="37" target="50">
+        <mxCell id="52" value="S" style="edge" parent="1" source="37" target="50" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="54" style="final" vertex="1" parent="1">
+        <mxCell id="54" style="final" parent="1" vertex="1">
           <mxGeometry x="420" y="277" width="80" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="55" value="S➜(S)• {)}" style="lritem" vertex="1" parent="54">
+        <mxCell id="55" value="S➜(S)• {)}" style="lritem" parent="54" vertex="1">
           <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="56" value=")" style="edge" edge="1" parent="1" source="50" target="54">
+        <mxCell id="56" value=")" style="edge" parent="1" source="50" target="54" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="57" value="0" style="showid" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="58" value="1" style="showid" vertex="1" parent="1">
+          <mxGeometry x="40" y="190" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="59" value="2" style="showid" vertex="1" parent="1">
+          <mxGeometry x="220" y="40" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="60" value="3" style="showid" vertex="1" parent="1">
+          <mxGeometry x="220" y="180" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="61" value="4" style="showid" vertex="1" parent="1">
+          <mxGeometry x="220" y="270" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="62" value="5" style="showid" vertex="1" parent="1">
+          <mxGeometry x="410" y="40" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="63" value="6" style="showid" vertex="1" parent="1">
+          <mxGeometry x="410" y="180" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="64" value="7" style="showid" vertex="1" parent="1">
+          <mxGeometry x="410" y="267" width="20" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

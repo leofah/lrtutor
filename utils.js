@@ -38,8 +38,7 @@ const arrayIncludes = (array, value) => array.filter(v => deepEqual(v, value)).l
 
 
 /**
- * compares two arrays if their contents are equal (as sets) with deep equality
- * javascript sets don't check for deep equal so two same objects can be in the set
+ * compares two arrays if their contents are equal (as sets) with deep equality.
  * @return boolean: true if sets are equal
  */
 const isSetsEqual = (a, b) => a.every(v => arrayIncludes(b, v)) && b.every(v => arrayIncludes(a, v));
