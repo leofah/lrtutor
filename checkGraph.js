@@ -1,5 +1,3 @@
-// TODO add help why the graph is not correct
-
 const CLASSES_ERROR = "alert alert-danger";
 const CLASSES_WARNING = "alert alert-warning";
 const CLASSES_CORRECT = "alert alert-success";
@@ -79,8 +77,8 @@ function showCanvasErrors(errorOnCanvas) {
     let everythingCorrect = true;
     if (errorOnCanvas) {
         everythingCorrect = false;
-        addNode("Please look at the automaton to see the errors", "<i>Highlighted LR-Item</i>: The Item could be parsed correctly. Look here[TODO] to see " +
-            "how write the LR Items<br><br>" +
+        addNode("Please look at the automaton to see the errors",
+            "<i>Highlighted LR-Item</i>: The Item could not be parsed correctly.<br><br>" +
             "<i>Highlighted State</i>: The closure of the state is not correct. Invalid LR-Items are ignored<br><br>" +
             "<i>Highlighted transition</i>: The transition is not needed or the target state has not the correct LR-Items " +
             "with closure to be a successor of the start state.", CLASSES_ERROR);

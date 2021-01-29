@@ -40,15 +40,19 @@ class Grammar {
         }
 
         //start production is always S' -> ...
-        //If not present add
-        this.startProduction = this.productions.filter(v => v.left === START_NON_TERMINAL)[0];
-        if (!this.startProduction) {
+        //If it is not present add one to the first production
+        const possibleStarts = this.productions.filter(v => v.left === START_NON_TERMINAL);
+        if (possibleStarts.length === 0) {
             if (this.productions.length === 0)
                 this._errors.push("Not enough productions to set a start production");
             else {
                 this.startProduction = {'left': START_NON_TERMINAL, 'right': [this.productions[0].left]};
                 this.productions.unshift(this.startProduction);
             }
+        } else if (possibleStarts.length > 1) {
+            this._errors.push("To many production with S' to set a start production");
+        } else {
+            this.startProduction = possibleStarts[0];
         }
 
         //set object variables

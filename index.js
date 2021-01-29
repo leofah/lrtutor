@@ -66,8 +66,6 @@ function main() {
     if (!mxClient.isBrowserSupported()) {
         mxUtils.error('Unsupported Browser', 200, false);
     }
-    // temporary
-    I('grammarTextArea').value = "S'➜E\nE➜E + T |T \nT➜T * F |F \nF➜( E ) |int \n"
 }
 
 function initGraph(grammar) {
@@ -168,9 +166,9 @@ function addListeners(graph) {
     //add a new State on the Canvas
     graph.addMouseListener({
         'mouseUp': function (_, evt) {
-            // needs to be in Mouse Up, cause Mouse Down stops the editing automatically. This stopping is
-            // executed automatically after this handler and cannot be changed.
-            // Checking if the User was editing is therefore only possible with huge overhead.
+            // needs to be in Mouse Up, cause Mouse Down stops editing of the new cell automatically.
+            // This stopping is executed after this handler and cannot be changed.
+            // Checking if the user was editing is therefore only possible with huge overhead.
             if (evt.isConsumed()) return
             if (graph.getSelectionCells().length > 0) return; //deselect cells and don't add a new state
             //don't add a cell if the canvas was scrolled
@@ -297,17 +295,31 @@ function changeGrammarDOM(grammar) {
     //input new grammar information
     if (grammar.error()) {
         grammarErrorElement.appendChild(document.createTextNode("Errors In the Grammar definition:\n"));
-        grammarErrorElement.appendChild(document.createTextNode(grammar._errors.join('\n')));
+        const list = document.createElement("ul");
+        for (const e of grammar._errors) {
+            const li = document.createElement("li");
+            li.textContent = e;
+            list.appendChild(li);
+        }
+        grammarErrorElement.appendChild(list);
 
         grammarErrorElement.classList.remove("d-none")
     } else {
-        grammarTextElement.appendChild(document.createTextNode(grammar));
+        const pre = document.createElement("pre");
+        pre.appendChild(document.createTextNode(grammar));
+        grammarTextElement.appendChild(pre);
 
-        I("grammarPresent").classList.remove("d-none")
+        grammarTextElement.appendChild(document.createTextNode("Terminals: " + grammar.terminals));
+        grammarTextElement.appendChild(document.createElement("br"));
+        grammarTextElement.appendChild(document.createTextNode("Nonterminals: " + grammar.nonTerminals));
+
+        I("graphHeading").textContent = "Canonical LR(" + grammar.lr + ") Automaton";
+
+        grammarTextElement.classList.remove("d-none")
         I("grammarInput").classList.add("d-none");
+        I("grammarInputButtons").classList.add("d-none");
 
         //show the graph content
         I("graphContent").classList.remove("d-none");
-        I("saveGraph").classList.remove("d-none");
     }
 }
