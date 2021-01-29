@@ -4,3 +4,4 @@ mxGraph-4.2.2-js/*
 !mxGraph-4.2.2-js/src/
 mxGraph-4.2.2-js/src/*
 !mxGraph-4.2.2-js/src/js
+!mxGraph-4.2.2-js/src/css
