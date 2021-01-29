@@ -33,7 +33,8 @@ document.write('<script src="checkGraph.js"></script>')
 document.write('<script src="utils.js"></script>')
 document.write('<script src="io.js"></script>')
 
-/** prototype function for cell to get the type (state, LR-Item) of the cell
+/**
+ * prototype function for cell to get the type (state, LR-Item) of the cell
  * cell.style cannot be returned as name, as it can contain overwritten style information, like a new color
  * However the Type Names need to be designed s.t. none includes another
  */
@@ -84,8 +85,6 @@ function initGraph(grammar) {
 
     //own Setup
     g.grammar = grammar;
-
-    // add custom handler for editing and connection cells
     g.ownConnectionHandler = new connectionHandler(g)
     g.editHandler = new editHandler(g);
 
@@ -163,6 +162,9 @@ function addListeners(graph) {
         //     console.log(evt);
     });
 
+    //rectangular selection
+    new mxRubberband(graph);
+
     //add a new State on the Canvas
     graph.addMouseListener({
         'mouseUp': function (_, evt) {
@@ -173,11 +175,6 @@ function addListeners(graph) {
             if (graph.getSelectionCells().length > 0) return; //deselect cells and don't add a new state
             //don't add a cell if the canvas was scrolled
             if (this.scrollStart !== I('mxCanvas').scrollLeft + I('mxCanvas').scrollTop) return;
-
-            // if (graph.cellEditor.editingCell) { // ist never editing, because mouse down stops editing
-            //     graph.stopEditing(true);
-            //     return;
-            // }
 
             const cell = evt.getCell();
             if (cell) return;
@@ -247,9 +244,6 @@ function addListeners(graph) {
         }
     });
 
-    //rectangular selection
-    graph.addMouseListener(new mxRubberband(graph));
-
     //keyboard listener
     document.addEventListener('keydown', evt => {
         switch (evt.key) {
@@ -311,9 +305,9 @@ function changeGrammarDOM(grammar) {
 
         I("grammarPresent").classList.remove("d-none")
         I("grammarInput").classList.add("d-none");
-    }
 
-    //show the graph content
-    I("graphContent").classList.remove("d-none");
-    I("saveGraph").classList.remove("d-none");
+        //show the graph content
+        I("graphContent").classList.remove("d-none");
+        I("saveGraph").classList.remove("d-none");
+    }
 }

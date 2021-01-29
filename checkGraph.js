@@ -1,5 +1,4 @@
 // TODO add help why the graph is not correct
-// TODO check for duplicate LR Items
 
 const CLASSES_ERROR = "alert alert-danger";
 const CLASSES_WARNING = "alert alert-warning";
@@ -50,7 +49,7 @@ function checkGraph() {
 }
 
 /**
- * Each show function shows the user the found errors for the specific result
+ * Each show function shows the found errors for the specific result to the user.
  * @return boolean true, if the graph still would be correct, so if there was no error
  */
 
@@ -91,9 +90,9 @@ function showCanvasErrors(errorOnCanvas) {
 
 function showStartErrors(correctStart) {
     if (!correctStart) {
-        addNode("The start state is not correct or missing",
+        addNode("The start state does not have the correct closure",
             "The start state needs to be <i>closure(" + graph.grammar.getStartLRItemText() + ")</i>. If the the " +
-            "canvas does not indicate an error with the closure, then to many items or lookaheads are written",
+            "canvas does not indicate an error with the closure, then too many items or lookaheads are written",
             CLASSES_ERROR);
         const startEdge = graph.startIndicatorSource.edges;
         mxUtils.setCellStyles(graph.getModel(), startEdge, mxConstants.STYLE_STROKECOLOR, COLOR_EDGE_ERROR);
@@ -109,7 +108,7 @@ function showTransitionErrors(transitionCheck) {
 
         if (extraTransitions.length > 0) {
             everythingCorrect = false;
-            let message = "State " + getIdForCell(cellID) + " has to many outgoing transitions with (non)terminals: " +
+            let message = "State " + getIdForCell(cellID) + " has too many outgoing transitions with (non)terminals: " +
                 extraTransitions.join(', ')
             addNode(message, "State " + getIdForCell(cellID) + " has no LR- Item with one of the terminals ["
                 + extraTransitions.join(', ') + "] after '" + DOT + "'", CLASSES_ERROR);

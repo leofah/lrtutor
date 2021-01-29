@@ -128,12 +128,13 @@ function toggleFinalStates() {
  */
 function deleteStates() {
     const selection = graph.getSelectionCells()
+    const startIndicator = graph.startIndicatorSource.edges[0];
     graph.getModel().beginUpdate();
     try {
         for (const cell of selection) {
             if (cell.getType() === STYLE_STATE || cell.getType() === STYLE_EDGE) {
-                if (graph.startState !== cell)  //start state cannot be deleted
-                    graph.removeCells([cell]);
+                if (graph.startState === cell || startIndicator === cell) continue; //start state cannot be deleted
+                graph.removeCells([cell]);
             }
         }
     } finally {

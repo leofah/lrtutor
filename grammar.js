@@ -8,7 +8,7 @@ const EPSILON = 'Ɛ';
 const DELIMITER = '|';
 const DOLLAR = '$';
 const START_NON_TERMINAL = "S'";
-const NOT_ALLOWED_TERMINALS = [DOT, ARROW, EPSILON, START_NON_TERMINAL, '->', '.', '{', '}', ','];
+const NOT_ALLOWED_TERMINALS = [DOT, ARROW, EPSILON, DELIMITER, DOLLAR, START_NON_TERMINAL, '->', '.', '{', '}', ','];
 
 class Grammar {
     /**
@@ -44,15 +44,17 @@ class Grammar {
         this.startProduction = this.productions.filter(v => v.left === START_NON_TERMINAL)[0];
         if (!this.startProduction) {
             if (this.productions.length === 0)
-                this._errors.push("Not enough production to set a start production");
+                this._errors.push("Not enough productions to set a start production");
             else {
                 this.startProduction = {'left': START_NON_TERMINAL, 'right': [this.productions[0].left]};
-                this.productions.push(this.startProduction);
+                this.productions.unshift(this.startProduction);
             }
         }
 
         //set object variables
         this.terminals = this._someTerminal.filter(v => !this.nonTerminals.includes(v));
+        this.terminals.sort();
+        this.nonTerminals.sort();
 
         this.computeEmpty();
         this.computeFirst1();
@@ -77,7 +79,7 @@ class Grammar {
 
         const prodSplit = row.split(ARROW);
         if (prodSplit.length !== 2) {
-            this._errors.push(row + ": contains to many or to less Arrows. Use -> for an arrow");
+            this._errors.push(row + ": contains too many or too less Arrows. Use -> for an arrow");
             return
         }
         const left = prodSplit[0].trim();
@@ -136,7 +138,7 @@ class Grammar {
     }
 
     parseLRItemHelp(itemText) {
-        let text = itemText.trim().replaceAll(' ', '');
+        let text = itemText.replaceAll(/\s/g, '');
 
         //check for lookahead set in lr 1 grammars
         let lookahead
