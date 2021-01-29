@@ -1,6 +1,6 @@
 .idea/*
-mxGraph/*
-!mxGraph/*.js
-!mxGraph/src/
-mxGraph/src/*
-!mxGraph/src/js
+mxGraph-4.2.2-js/*
+!mxGraph-4.2.2-js/*.js
+!mxGraph-4.2.2-js/src/
+mxGraph-4.2.2-js/src/*
+!mxGraph-4.2.2-js/src/js
