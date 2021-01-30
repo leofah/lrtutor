@@ -1,16 +1,10 @@
+import {ARROW, DELIMITER, DOLLAR, DOT, EPSILON, NOT_ALLOWED_TERMINALS, START_NON_TERMINAL} from "./constants.js";
+import {arrayIncludes} from "./utils.js";
+
 /**
  * Stores the current grammar and gives functions to parse it
  */
-
-const DOT = '•';
-const ARROW = '➜';
-const EPSILON = 'Ɛ';
-const DELIMITER = '|';
-const DOLLAR = '$';
-const START_NON_TERMINAL = "S'";
-const NOT_ALLOWED_TERMINALS = [DOT, ARROW, EPSILON, DELIMITER, DOLLAR, START_NON_TERMINAL, '->', '.', '{', '}', ','];
-
-class Grammar {
+export default class Grammar {
     /**
      * parses Grammar to use for the Graph
      * The Grammar does not allow '{', '}', '•', '➜' as terminal nor nonterminal
@@ -64,6 +58,13 @@ class Grammar {
         this.computeFirst1();
     }
 
+    transformItemInput(inputText) {
+        if (inputText.trim() === "") return "";
+        //replace characters for LR Items
+        inputText = inputText.replace(".", DOT).replace("->", ARROW);
+        return inputText;
+    }
+
     toString() {
         const plainProductions = [];
         for (const prod of this.productions) {
@@ -72,7 +73,6 @@ class Grammar {
         return plainProductions.join('\n');
     }
 
-    //------------parsing-------------
     addInputRow(row) {
         //Format N -> S S S S | S S ; where N is a NonTerminal and S are Some Terminals, these are delimited by a space
         // multiple productions with the same Left Non Terminal can be delimited by |

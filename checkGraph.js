@@ -1,10 +1,25 @@
+import {getIdForCell} from "./graph.js";
+import {
+    ARROW,
+    COLOR_EDGE_ERROR,
+    COLOR_FONT_ERROR,
+    COLOR_STATE_ERROR,
+    DOT,
+    STYLE_EDGE,
+    STYLE_LR_ITEM,
+    STYLE_STATE
+} from "./constants.js";
+import {I, isSetsEqual} from "./utils.js";
+import {getGraph} from "./init.js";
+
 const CLASSES_ERROR = "alert alert-danger";
 const CLASSES_WARNING = "alert alert-warning";
 const CLASSES_CORRECT = "alert alert-success";
 const errorElement = document.getElementById("graphErrors");
 
-function checkGraph() {
+export function checkGraph() {
     hideErrors();
+    const graph = getGraph();
     prepareGraph(graph);
 
     //check parts of the automaton
@@ -21,19 +36,19 @@ function checkGraph() {
     //show the errors
     // &&= does not work due to fast evaluation of boolean operators
     //errors shown on the canvas
-    let everythingCorrect = showLRItemsErrors(lrCheck);
-    everythingCorrect = showClosureErrors(closureCheck) && everythingCorrect;
-    everythingCorrect = showTransitionCanvasErrors(transitionCheck) && everythingCorrect;
-    everythingCorrect = showStartErrors(correctStart) && everythingCorrect;
+    let everythingCorrect = showLRItemsErrors(lrCheck, graph);
+    everythingCorrect = showClosureErrors(closureCheck, graph) && everythingCorrect;
+    everythingCorrect = showTransitionCanvasErrors(transitionCheck, graph) && everythingCorrect;
+    everythingCorrect = showStartErrors(correctStart, graph) && everythingCorrect;
     let errorOnCanvas = !everythingCorrect;
     //errors shown on the side element
-    everythingCorrect = showCanvasErrors(errorOnCanvas) && everythingCorrect;
-    everythingCorrect = showTransitionErrors(transitionCheck) && everythingCorrect;
-    everythingCorrect = showFinalStatesErrors(finalCheck) && everythingCorrect;
-    everythingCorrect = showConnectedErrors(connected) && everythingCorrect;
-    everythingCorrect = showDuplicateStatesErrors(duplicateStates) && everythingCorrect;
-    everythingCorrect = showDuplicateItemsErrors(duplicateItems) && everythingCorrect;
-    showCorrect(everythingCorrect);
+    everythingCorrect = showCanvasErrors(errorOnCanvas, graph) && everythingCorrect;
+    everythingCorrect = showTransitionErrors(transitionCheck, graph) && everythingCorrect;
+    everythingCorrect = showFinalStatesErrors(finalCheck, graph) && everythingCorrect;
+    everythingCorrect = showConnectedErrors(connected, graph) && everythingCorrect;
+    everythingCorrect = showDuplicateStatesErrors(duplicateStates, graph) && everythingCorrect;
+    everythingCorrect = showDuplicateItemsErrors(duplicateItems, graph) && everythingCorrect;
+    showCorrect(everythingCorrect, graph);
 
     //show the DOM elements
     errorElement.classList.remove("d-none")
@@ -51,12 +66,12 @@ function checkGraph() {
  * @return boolean true, if the graph still would be correct, so if there was no error
  */
 
-function showLRItemsErrors(lrCheck) {
+function showLRItemsErrors(lrCheck, graph) {
     mxUtils.setCellStyles(graph.getModel(), lrCheck.incorrect, mxConstants.STYLE_FONTCOLOR, COLOR_FONT_ERROR);
     return lrCheck.incorrect.length === 0;
 }
 
-function showClosureErrors(closureCheck) {
+function showClosureErrors(closureCheck, graph) {
     mxUtils.setCellStyles(graph.getModel(), closureCheck.incorrect, mxConstants.STYLE_FILLCOLOR, COLOR_STATE_ERROR);
     return closureCheck.incorrect.length === 0;
 }
@@ -64,7 +79,7 @@ function showClosureErrors(closureCheck) {
 /**
  * shows wrong transitions on the canvas
  */
-function showTransitionCanvasErrors(transitionCheck) {
+function showTransitionCanvasErrors(transitionCheck, graph) {
     mxUtils.setCellStyles(graph.getModel(), transitionCheck.incorrect, mxConstants.STYLE_STROKECOLOR, COLOR_EDGE_ERROR);
     mxUtils.setCellStyles(graph.getModel(), transitionCheck.incorrect, mxConstants.STYLE_FONTCOLOR, COLOR_FONT_ERROR);
     return transitionCheck.incorrect.length === 0;
@@ -73,7 +88,7 @@ function showTransitionCanvasErrors(transitionCheck) {
 /**
  * shows a message if an error was marked on the canvas.
  */
-function showCanvasErrors(errorOnCanvas) {
+function showCanvasErrors(errorOnCanvas, graph) {
     let everythingCorrect = true;
     if (errorOnCanvas) {
         everythingCorrect = false;
@@ -86,7 +101,7 @@ function showCanvasErrors(errorOnCanvas) {
     return everythingCorrect;
 }
 
-function showStartErrors(correctStart) {
+function showStartErrors(correctStart, graph) {
     if (!correctStart) {
         addNode("The start state does not have the correct closure",
             "The start state needs to be <i>closure(" + graph.grammar.getStartLRItemText() + ")</i>. If the the " +
@@ -98,7 +113,7 @@ function showStartErrors(correctStart) {
     return correctStart;
 }
 
-function showTransitionErrors(transitionCheck) {
+function showTransitionErrors(transitionCheck, graph) {
     let everythingCorrect = true;
     for (const [cellID, errorTransitions] of transitionCheck.stateIncorrectTransitions) {
         const extraTransitions = errorTransitions.extraTransitions;
@@ -123,7 +138,7 @@ function showTransitionErrors(transitionCheck) {
     return everythingCorrect;
 }
 
-function showFinalStatesErrors(finalCheck) {
+function showFinalStatesErrors(finalCheck, graph) {
     let everythingCorrect = true;
     if (finalCheck.incorrect.length > 0) {
         everythingCorrect = false;
@@ -135,7 +150,7 @@ function showFinalStatesErrors(finalCheck) {
     return everythingCorrect;
 }
 
-function showConnectedErrors(connected) {
+function showConnectedErrors(connected, graph) {
     let everythingCorrect = true;
     if (connected.incorrect.length > 0) {
         everythingCorrect = false;
@@ -147,7 +162,7 @@ function showConnectedErrors(connected) {
     return everythingCorrect;
 }
 
-function showDuplicateStatesErrors(duplicates) {
+function showDuplicateStatesErrors(duplicates, graph) {
     let everythingCorrect = true;
     if (duplicates.size > 0) {
         everythingCorrect = false;
@@ -162,7 +177,7 @@ function showDuplicateStatesErrors(duplicates) {
     return everythingCorrect;
 }
 
-function showDuplicateItemsErrors(duplicates) {
+function showDuplicateItemsErrors(duplicates, graph) {
     let everythingCorrect = true;
     if (duplicates.size > 0) {
         everythingCorrect = false;
@@ -178,7 +193,7 @@ function showDuplicateItemsErrors(duplicates) {
     return everythingCorrect;
 }
 
-function showCorrect(everythingCorrect) {
+function showCorrect(everythingCorrect, graph) {
     if (everythingCorrect)
         addNode("Your automaton is correct", "Well done, you solved the complete automaton", CLASSES_CORRECT);
 }
@@ -200,7 +215,8 @@ function addNode(message, tooltip, classes) {
  * Hides all the elements that indicate errors
  * These elements were added by check graph and so all the show...Errors functions
  */
-function hideErrors() {
+export function hideErrors() {
+    const graph = getGraph();
     //Clear Canvas
     const cells = Object.values(graph.getModel().cells);
     mxUtils.setCellStyles(graph.getModel(), cells.filter(c => c.getType() === STYLE_LR_ITEM), mxConstants.STYLE_FONTCOLOR, null);
@@ -229,10 +245,11 @@ function prepareGraph(graph) {
 /**
  * return every lrItem of the given State as array.
  * invalid lrItems are ignored
- * @param state
+ * @param state {mxCell}
+ * @param graph {mxGraph}
  * @return {mxCell[]}
  */
-function getLRItems(state) {
+function getLRItems(state, graph) {
     const lrItems = [];
     for (const lrItem of state.children) {
         if (lrItem.getType() !== STYLE_LR_ITEM) continue;
@@ -273,7 +290,7 @@ function checkCorrectClosure(graph) {
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        const lrItems = getLRItems(cell);
+        const lrItems = getLRItems(cell, graph);
         const closure = graph.grammar.computeEpsilonClosure(lrItems);
         if (isSetsEqual(closure, lrItems))
             correct.push(cell);
@@ -349,7 +366,7 @@ function checkTransitions(graph) {
             const targetState = graph.getModel().getCell(targetID);
             const edge = cell.edges.filter(e => e.value === terminal && e.getTerminal(true) === cell)[0]
 
-            const lrItems = getLRItems(targetState);
+            const lrItems = getLRItems(targetState, graph);
             const closure = graph.grammar.computeEpsilonClosure(shiftedItems)
             if (isSetsEqual(closure, lrItems))
                 correct.push(edge);
@@ -380,7 +397,7 @@ function checkStartState(graph) {
     const startState = graph.startState
     const startLRItem = graph.grammar.parseLRItem(graph.grammar.getStartLRItemText());
 
-    const lrItems = getLRItems(startState);
+    const lrItems = getLRItems(startState, graph);
     const closure = graph.grammar.computeEpsilonClosure([startLRItem]);
     return isSetsEqual(closure, lrItems);
 }
@@ -460,7 +477,7 @@ function checkDuplicateStates(graph) {
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        const lrItems = getLRItems(cell);
+        const lrItems = getLRItems(cell, graph);
         //clear string representation of all lrItems (sorted and no duplicates)
         const rep = Array.from(new Set(lrItems.map(i => graph.grammar.itemToText(i)))).sort().toString();
         if (!reprStates.has(rep)) {
@@ -489,7 +506,7 @@ function checkDuplicateLRItems(graph) {
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
 
-        const lrItems = getLRItems(cell).map(i => graph.grammar.itemToText(i));
+        const lrItems = getLRItems(cell, graph).map(i => graph.grammar.itemToText(i));
         const setItems = new Set(lrItems);
         for (const item of setItems) {
             delete lrItems[lrItems.indexOf(item)];

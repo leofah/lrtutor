@@ -1,6 +1,24 @@
-// adds a state to the graph on given position and starts editing the first LR item
-// returns the created cell
-function addState(graph, locX, loxY) {
+import {
+    LRITEM_HEIGHT,
+    STATE_MARGIN,
+    STATE_MIN_HEIGHT,
+    STATE_MIN_WIDTH,
+    STYLE_EDGE,
+    STYLE_FINAL_STATE,
+    STYLE_LR_ITEM,
+    STYLE_SHOW_ID,
+    STYLE_STATE
+} from "./constants.js";
+import {getGraph} from "./init.js";
+
+/**
+ * adds a state to the graph on given position and starts editing the first LR item
+ * @param graph mxGraph
+ * @param locX X location of top left corner for new state
+ * @param loxY Y location of top left corner for new state
+ * @return {mxCell} the created State
+ */
+export function addState(graph, locX, loxY) {
     let state;
     graph.getModel().beginUpdate();
     try {
@@ -25,7 +43,7 @@ function addState(graph, locX, loxY) {
  * @param terminal Terminal to use as label for the edge
  * @return the created edge
  */
-function addEdge(graph, source, target, terminal) {
+export function addEdge(graph, source, target, terminal) {
     graph.getModel().beginUpdate();
     try {
         // remove edge with same terminal (deterministic graph)
@@ -54,7 +72,7 @@ function addEdge(graph, source, target, terminal) {
  *
  * @param graph
  */
-function addStartState(graph) {
+export function addStartState(graph) {
     //add start state to graph
     graph.getModel().beginUpdate();
     const X = 50, Y = 50;
@@ -80,7 +98,7 @@ function addStartState(graph) {
  * @param graph mxGraph
  * @param state new start State
  */
-function setStartStateIntern(graph, state) {
+export function setStartStateIntern(graph, state) {
     if (state == null)
         return;
     const geo = state.getGeometry();
@@ -98,7 +116,7 @@ function setStartStateIntern(graph, state) {
  *
  * @param graph
  */
-function redrawStartIndicator(graph) {
+export function redrawStartIndicator(graph) {
     const geoStart = graph.startState.getGeometry();
     const geoSource = graph.startIndicatorSource.getGeometry().clone()
     geoSource.x = geoStart.x - 30;
@@ -109,7 +127,8 @@ function redrawStartIndicator(graph) {
 /**
  * toggles the final state attribute on the selected States
  */
-function toggleFinalStates() {
+export function toggleFinalStates() {
+    const graph = getGraph();
     const selection = graph.getSelectionCells()
     for (const cell of selection) {
         if (cell.getType() === STYLE_STATE) {
@@ -126,7 +145,8 @@ function toggleFinalStates() {
  * deletes the selected states and edges
  * connected edges are deleted as well
  */
-function deleteStates() {
+export function deleteStates() {
+    const graph = getGraph();
     const selection = graph.getSelectionCells()
     const startIndicator = graph.startIndicatorSource.edges[0];
     graph.getModel().beginUpdate();
@@ -149,7 +169,7 @@ let stateIds = new Map();
  * mxGraph cells already have ids, however the numbers can get quite large, so these
  * ids are only used to notify the user, all other ids are always built in mxCell ids.
  */
-function showIDs(graph) {
+export function showIDs(graph) {
     hideIDs(graph);
     //generate ids
     const ids = new Map();
@@ -176,7 +196,7 @@ function showIDs(graph) {
 /**
  * deletes the shown ids of the states
  */
-function hideIDs(graph) {
+export function hideIDs(graph) {
     graph.getModel().beginUpdate();
     try {
         for (const cell of Object.values(graph.getModel().cells)) {
@@ -193,7 +213,8 @@ function hideIDs(graph) {
  * moves the state id indicator
  * @param cellId
  */
-function moveStateId(cellId) {
+export function moveStateId(cellId) {
+    const graph = getGraph();
     if (!stateIds.has(cellId)) return;
     const id = stateIds.get(cellId);
     const geoCell = graph.getModel().getCell(cellId).getGeometry();
@@ -210,11 +231,12 @@ function moveStateId(cellId) {
  * @param cellId of the State
  * @return int id of given state or undefined
  */
-function getIdForCell(cellId) {
+export function getIdForCell(cellId) {
     return stateIds.get(cellId)?.value;
 }
 
-function resetCanvas() {
+export function resetCanvas() {
+    const graph = getGraph();
     //delete all states and add the start state again
     graph.getModel().beginUpdate();
     try {

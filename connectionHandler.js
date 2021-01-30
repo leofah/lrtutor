@@ -8,7 +8,13 @@
  *      as target Sate
  */
 
-class connectionHandler {
+import {addEdge, addState} from "./graph.js";
+import {executeBeforeSerialize} from "./io.js";
+import {STATE_MIN_HEIGHT, STATE_MIN_WIDTH, STYLE_STATE} from "./constants.js";
+import {I} from "./utils.js";
+
+
+export default class connectionHandler {
 
     constructor(graph) {
         this.graph = graph;
@@ -187,7 +193,6 @@ class connectionHandler {
      * These buttons will be shown if a start state is selected.
      */
     addTerminalButtons() {
-        // while (this.domElement.childElementCount > 0) this.domElement.removeChild(this.domElement.firstChild);
         const toRemove = []
         for (const child of this.domElement.children) {
             if (child.tagName.toLowerCase() === 'button') {
@@ -198,7 +203,7 @@ class connectionHandler {
         for (const terminal of this.graph.grammar.terminals.concat(this.graph.grammar.nonTerminals)) {
             const btn = document.createElement('button');
             btn.setAttribute('class', 'btn btn-outline-info m-1 align-self-end');
-            btn.setAttribute('onClick', 'graph.ownConnectionHandler.useTerminal(\'' + terminal + '\')');
+            btn.addEventListener('click', this.useTerminal.bind(this, terminal));
             btn.appendChild(document.createTextNode('' + terminal));
             this.domElement.appendChild(btn);
         }

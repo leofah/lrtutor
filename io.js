@@ -1,3 +1,9 @@
+import {changeGrammarDOM, getGraph, initGraph} from "./init.js";
+import Grammar from "./grammar.js";
+import {showIDs} from "./graph.js";
+import {hideErrors} from "./checkGraph.js";
+import {GRAPH_VERSION} from "./constants.js";
+
 /**
  * creates an XML representation of the graph, with mxCodec ans mxUtils.getXml
  * a version attribute is added for compatibility reasons
@@ -62,10 +68,12 @@ function deSerializeGraph(serial) {
         changeGrammarDOM(grammar);
         if (grammar.error())
             return "Error in the Grammar definition";
-        if (!graphActive)
+
+        if (getGraph() === undefined)
             initGraph(grammar);
-        else
-            graph.grammar = grammar;
+
+        const graph = getGraph();
+        graph.grammar = grammar;
 
         const graphDocument = mxUtils.parseXml(graphNode.innerHTML);
         const codec = new mxCodec(graphDocument);
@@ -99,7 +107,7 @@ function deSerializeGraph(serial) {
  * @param graph mxGraph
  * @param func callback function to execute
  */
-function executeBeforeSerialize(graph, func) {
+export function executeBeforeSerialize(graph, func) {
     if (!graph.beforeSerialize) graph.beforeSerialize = [];
     graph.beforeSerialize.push(func)
 }
@@ -107,15 +115,16 @@ function executeBeforeSerialize(graph, func) {
 /**
  * Creates a save file for the graph and a save dialog is opened
  */
-function saveGraph() {
-    if (graphActive)
+export function saveGraph() {
+    const graph = getGraph();
+    if (graph !== undefined)
         saveFile('graph.xml', serializeGraph(graph), 'text/xml');
 }
 
 /**
  * Loads the graph from a file. A File Window is opened to select the graph file
  */
-function loadGraph() {
+export function loadGraph() {
     loadFile(serial => {
         // remove grammar input
         const error = deSerializeGraph(serial);

@@ -5,7 +5,7 @@
  * @param object2: object to compare
  * @return boolean, whether the objects are the same
  */
-function deepEqual(object1, object2) {
+export function deepEqual(object1, object2) {
     function isObject(object) {
         return object != null && typeof object === 'object';
     }
@@ -34,18 +34,18 @@ function deepEqual(object1, object2) {
  * checks if array includes the value with deepEqual
  * @return boolean: whether the array includes the value
  */
-const arrayIncludes = (array, value) => array.filter(v => deepEqual(v, value)).length > 0;
+export const arrayIncludes = (array, value) => array.filter(v => deepEqual(v, value)).length > 0;
 
 
 /**
  * compares two arrays if their contents are equal (as sets) with deep equality.
  * @return boolean: true if sets are equal
  */
-const isSetsEqual = (a, b) => a.every(v => arrayIncludes(b, v)) && b.every(v => arrayIncludes(a, v));
+export const isSetsEqual = (a, b) => a.every(v => arrayIncludes(b, v)) && b.every(v => arrayIncludes(a, v));
 
 /**
  * shortcut for get Element By ID
  */
-function I(elementID) {
+export function I(elementID) {
     return document.getElementById(elementID);
 }

@@ -6,7 +6,11 @@
  * if an incorrect lritem is added, the editing is aborted
  */
 
-class editHandler {
+import {ARROW, DOT, LRITEM_HEIGHT, STATE_MARGIN, STATE_MIN_WIDTH, STYLE_LR_ITEM, STYLE_STATE} from "./constants.js";
+import {redrawStartIndicator} from "./graph.js";
+import {getGraph} from "./init.js";
+
+export default class editHandler {
     constructor(graph) {
         this.graph = graph;
         graph.setEnterStopsCellEditing(true);
@@ -32,7 +36,7 @@ class editHandler {
         this.graph.addListener(mxEvent.DOUBLE_CLICK, (_, evt) => {
             const cell = evt.getProperty('cell');
             if (!cell || cell.getType() !== STYLE_STATE) return;
-            graph.getSelectionModel().clear();
+            getGraph().getSelectionModel().clear();
             this.editState(cell);
             mxEvent.consume(evt);
         });

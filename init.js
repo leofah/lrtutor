@@ -1,37 +1,31 @@
-const GRAPH_VERSION = '0.4';
-
-//Style and type names for the different elements on the canvas
-const STYLE_STATE = 'state';
-const STYLE_FINAL_STATE = 'final';
-const STYLE_EDGE = 'edge';
-const STYLE_LR_ITEM = 'lritem';
-const STYLE_SHOW_ID = 'showid';
-
-//Colors for the elements
-const COLOR_FONT = '#363D45';
-const COLOR_FONT_ERROR = '#FF0000';
-const COLOR_STATE = '#93E4F1';
-const COLOR_STATE_ERROR = '#F8D7DA';
-const COLOR_STATE_BORDER = '#0E606C';
-const COLOR_EDGE = '#073036';
-const COLOR_EDGE_ERROR = '#FF0000';
-const COLOR_ID = '#F8F991';
-const COLOR_BACKGROUND = '#F5F5F4';
-
-//Set Pixel Values for States and Items
-const STATE_MARGIN = 10;
-const LRITEM_HEIGHT = 20;
-const STATE_MIN_HEIGHT = 40;
-const STATE_MIN_WIDTH = 60;
-
-//include files (for development)
-document.write('<script src="graph.js"></script>')
-document.write('<script src="connectionHandler.js"></script>')
-document.write('<script src="editHandler.js"></script>')
-document.write('<script src="grammar.js"></script>')
-document.write('<script src="checkGraph.js"></script>')
-document.write('<script src="utils.js"></script>')
-document.write('<script src="io.js"></script>')
+import {
+    addStartState,
+    addState,
+    deleteStates,
+    moveStateId,
+    redrawStartIndicator,
+    showIDs,
+    toggleFinalStates
+} from "./graph.js";
+import Grammar from "./grammar.js";
+import editHandler from "./editHandler.js";
+import connectionHandler from "./connectionHandler.js";
+import {
+    COLOR_BACKGROUND,
+    COLOR_EDGE,
+    COLOR_FONT,
+    COLOR_ID,
+    COLOR_STATE,
+    COLOR_STATE_BORDER,
+    STYLE_EDGE,
+    STYLE_FINAL_STATE,
+    STYLE_LR_ITEM,
+    STYLE_SHOW_ID,
+    STYLE_STATE
+} from "./constants.js";
+import {I} from "./utils.js";
+import {executeBeforeSerialize} from "./io.js";
+import {hideErrors} from "./checkGraph.js";
 
 /**
  * prototype function for cell to get the type (state, LR-Item) of the cell
@@ -58,17 +52,17 @@ mxCell.prototype.isFinal = function () {
     return style.includes(STYLE_FINAL_STATE);
 }
 
-let graph = new mxGraph();
-let graphActive = false; //indicates if a graph and grammar is already loaded
-
-function main() {
-    //checks if browser is supported
-    if (!mxClient.isBrowserSupported()) {
-        mxUtils.error('Unsupported Browser', 200, false);
-    }
+if (!mxClient.isBrowserSupported()) {
+    mxUtils.error('Unsupported Browser', 200, false);
 }
 
-function initGraph(grammar) {
+let graph = undefined;
+
+export function getGraph() {
+    return graph;
+}
+
+export function initGraph(grammar) {
     //setup the mxGraph and its variables
     const g = new mxGraph(I('mxCanvas'), new mxGraphModel());
     g.setAllowDanglingEdges(false);
@@ -91,8 +85,6 @@ function initGraph(grammar) {
     addStartState(g);
     registerCallbacks(g);
 
-    //set global graph information
-    graphActive = true;
     graph = g;
 
     return g;
@@ -165,6 +157,7 @@ function addListeners(graph) {
 
     //add a new State on the Canvas
     graph.addMouseListener({
+        scrollStart: undefined,
         'mouseUp': function (_, evt) {
             // needs to be in Mouse Up, cause Mouse Down stops editing of the new cell automatically.
             // This stopping is executed after this handler and cannot be changed.
@@ -274,7 +267,7 @@ function registerCallbacks(graph) {
  * @param plainGrammar Grammar description
  * @param lr0 int to represent the lr type, 0 or 1 is allowed
  */
-function setGrammar(plainGrammar, lr0) {
+export function setGrammar(plainGrammar, lr0) {
     const lr = lr0 ? 0 : 1;
     const grammar = new Grammar(plainGrammar, lr);
     changeGrammarDOM(grammar);
@@ -283,7 +276,7 @@ function setGrammar(plainGrammar, lr0) {
     initGraph(grammar);
 }
 
-function changeGrammarDOM(grammar) {
+export function changeGrammarDOM(grammar) {
     const grammarTextElement = I("grammarText");
     const grammarErrorElement = I("grammarError");
 
