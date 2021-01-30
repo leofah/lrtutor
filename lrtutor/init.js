@@ -1,3 +1,5 @@
+//TODO confirm dialog if unsaved graph would be removed. Load, Clear, Reload side/ leave side
+
 import {
     addStartState,
     addState,

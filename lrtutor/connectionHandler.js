@@ -1,3 +1,5 @@
+//TODO seletion after selction with rubberband does not show the nonterminals
+
 /**
  * Handles the creation af transitions between two states.
  * First the user selects the start state.
