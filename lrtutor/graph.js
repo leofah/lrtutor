@@ -144,6 +144,7 @@ export function toggleFinalStates() {
 /**
  * deletes the selected states and edges
  * connected edges are deleted as well
+ * The start state is not deleted.
  */
 export function deleteStates() {
     const graph = getGraph();

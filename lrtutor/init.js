@@ -270,6 +270,7 @@ function registerCallbacks(graph) {
  * @param lr0 int to represent the lr type, 0 or 1 is allowed
  */
 export function setGrammar(plainGrammar, lr0) {
+    if (graph !== undefined) return;
     const lr = lr0 ? 0 : 1;
     const grammar = new Grammar(plainGrammar, lr);
     changeGrammarDOM(grammar);
@@ -280,7 +281,7 @@ export function setGrammar(plainGrammar, lr0) {
 
 export function changeGrammarDOM(grammar) {
     const grammarTextElement = I("grammarText");
-    const grammarErrorElement = I("grammarError");
+    const grammarErrorElement = I("grammarErrors");
 
     //Set default state
     while (grammarTextElement.hasChildNodes()) grammarTextElement.removeChild(grammarTextElement.firstChild);
