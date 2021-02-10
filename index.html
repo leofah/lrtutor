@@ -4,13 +4,6 @@
   <meta charset="UTF-8">
   <title>LR Parser Training</title>
   <link rel="stylesheet" href="bootstrap-4.5.3-dist/css/bootstrap.min.css">
-  <script type="text/javascript">
-      mxBasePath = 'mxGraph-4.2.2-js/src';
-      mxLoadResources = false;
-  </script>
-  <script type="text/javascript" src="mxGraph-4.2.2-js/src/js/mxClient.js"></script>
-  <!-- development without the min file -->
-  <!--<script type="text/javascript" src="mxGraph-4.2.2-js/mxClient.min.js"></script>-->
 </head>
 
 <body>
@@ -68,7 +61,7 @@
         <pre id="grammarErrors" class="alert alert-danger d-none"></pre>
         <ul>
           <li>Use '->' or '➜' as arrow</li>
-          <li>(Non-)Terminals can have multiple characters, use <b>space</b> to delimit (Non-)Terminals</li>
+          <li>(Non-)Terminals can have multiple characters, use any whitespace to delimit (Non-)Terminals</li>
           <li>S' is always the start nonterminal. If S' does not exists, it will be added to first production</li>
           <li>| is used as delimiter</li>
           <li>•, ➜, Ɛ, |, $, S', ->, ., {, }, and ',' cannot be used as
@@ -195,6 +188,13 @@
   </div>
 </div>
 </body>
+<script type="text/javascript">
+    mxBasePath = 'mxGraph-4.2.2-js/src';
+    mxLoadResources = false;
+</script>
+<script type="text/javascript" src="mxGraph-4.2.2-js/src/js/mxClient.js"></script>
+<!--<script type="text/javascript" src="mxGraph-4.2.2-js/mxClient.min.js"></script>-->
+
 <script type="module" src="lrtutor/lrtutor.js"></script>
 <!--<script type="application/javascript" src="lrtutor.min.js"></script>-->
 

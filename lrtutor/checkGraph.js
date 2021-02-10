@@ -187,8 +187,8 @@ function showDuplicateItemsErrors(duplicates, graph) {
             notes.push('State ' + getIdForCell(key) + ": " + duplicates.get(key) + "");
         }
         message += notes.join(", ");
-        addNode(message, "Duplicate LR Items are not critical, but they make a state unnecessary large." +
-            "Consider removing the duplicate items.", CLASSES_WARNING);
+        addNode(message, "Duplicate LR Items are not critical, but on lr1 automaton they are not handled correct. " +
+            "Consider combining the duplicate items to one item", CLASSES_WARNING);
     }
     return everythingCorrect;
 }
@@ -497,7 +497,7 @@ function checkDuplicateStates(graph) {
 }
 
 /**
- * check for states with duplicate LR Items
+ * check for states with duplicate LR Items (ignoring the lookahead)
  * @param graph
  * @return {Map<int, Set<string>>} state id -> LR Items
  */
@@ -505,8 +505,14 @@ function checkDuplicateLRItems(graph) {
     const duplicates = new Map(); //result map: state -> duplicate LR Items in this state
     for (const cell of Object.values(graph.getModel().cells)) {
         if (cell.getType() !== STYLE_STATE) continue;
+        //remove lookahead and use standard text to represent the lr items
+        const lrItems = getLRItems(cell, graph).map(i => new Object({
+            'left': i.left,
+            'right1': i.right1,
+            'right2': i.right2
+        })).map(i => graph.grammar.itemToText(i));
 
-        const lrItems = getLRItems(cell, graph).map(i => graph.grammar.itemToText(i));
+        //find duplicates in the items
         const setItems = new Set(lrItems);
         for (const item of setItems) {
             delete lrItems[lrItems.indexOf(item)];

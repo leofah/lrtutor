@@ -1,5 +1,3 @@
-//TODO seletion after selction with rubberband does not show the nonterminals
-
 /**
  * Handles the creation af transitions between two states.
  * First the user selects the start state.
@@ -48,8 +46,9 @@ export default class connectionHandler {
         //otherwise the handler is reset
         this.graph.getSelectionModel().addListener(mxEvent.CHANGE, (_, evt) => {
             const selectedCells = this.graph.getSelectionCells();
-            if (selectedCells.length === 1) {
-                let cell = selectedCells[0];
+            const selectedStates = selectedCells.filter(c => c.getType() === STYLE_STATE);
+            if (selectedStates.length === 1) {
+                let cell = selectedStates[0];
                 while (cell != null && cell.getType() !== STYLE_STATE) cell = cell.getParent();
                 if (cell != null) {
                     this.setStartState(cell)

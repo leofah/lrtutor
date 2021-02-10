@@ -25,10 +25,10 @@ export default class editHandler {
         this.graph.addListener(mxEvent.EDITING_STOPPED, (sender, evt) => {
             let cell = this.cur_edit_cell;
             this.cur_edit_cell = null;
-            if (cell && cell.getType() === STYLE_LR_ITEM) {
+            if (cell?.getType() === STYLE_LR_ITEM) {
                 //listen only for stopped on LR items
                 this.listenEditStopLRItem(cell, evt);
-                mxEvent.consume(evt);
+                evt.consume();
             }
         });
 
@@ -38,7 +38,7 @@ export default class editHandler {
             if (!cell || cell.getType() !== STYLE_STATE) return;
             getGraph().getSelectionModel().clear();
             this.editState(cell);
-            mxEvent.consume(evt);
+            evt.consume();
         });
     }
 
@@ -48,7 +48,7 @@ export default class editHandler {
 
         //set new escaped value
         const value = cell.getValue();
-        const newValue = this.checkLRItem(value);
+        const newValue = this.transformLRItem(value);
         this.graph.getModel().beginUpdate();
         try {
             this.graph.getModel().setValue(cell, newValue);
@@ -123,16 +123,10 @@ export default class editHandler {
         this.graph.startEditingAtCell(item);
     }
 
-    checkLRItem(text) {
+    transformLRItem(text) {
         if (text.trim() === "") {
             return "";
         }
-        //pretty characters for LR Items
-        text = text.replace(".", DOT).replace("->", ARROW);
-        //check if correct lritem
-        if (!this.graph.grammar.parseLRItem(text)) {
-            // return "error";
-        }
-        return text;
+        return text.replace(".", DOT).replace("->", ARROW);
     }
 }

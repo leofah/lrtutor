@@ -26,8 +26,6 @@ import {
     STYLE_STATE
 } from "./constants.js";
 import {I} from "./utils.js";
-import {executeBeforeSerialize} from "./io.js";
-import {hideErrors} from "./checkGraph.js";
 
 /**
  * prototype function for cell to get the type (state, LR-Item) of the cell
@@ -85,7 +83,6 @@ export function initGraph(grammar) {
     setStylesheet(g);
     addListeners(g);
     addStartState(g);
-    registerCallbacks(g);
 
     graph = g;
 
@@ -253,13 +250,6 @@ function addListeners(graph) {
     });
 }
 
-/**
- * register some callbacks for the serialization, which cannot register themself
- * @param graph mxGraph
- */
-function registerCallbacks(graph) {
-    executeBeforeSerialize(graph, hideErrors);
-}
 
 /**
  * Parses the grammar and initializes the graph with the grammar
@@ -283,7 +273,7 @@ export function changeGrammarDOM(grammar) {
     const grammarTextElement = I("grammarText");
     const grammarErrorElement = I("grammarErrors");
 
-    //Set default state
+    //reset DOM
     while (grammarTextElement.hasChildNodes()) grammarTextElement.removeChild(grammarTextElement.firstChild);
     while (grammarErrorElement.hasChildNodes()) grammarErrorElement.removeChild(grammarErrorElement.firstChild);
     grammarErrorElement.classList.add("d-none")

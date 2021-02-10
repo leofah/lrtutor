@@ -58,13 +58,6 @@ export default class Grammar {
         this.computeFirst1();
     }
 
-    transformItemInput(inputText) {
-        if (inputText.trim() === "") return "";
-        //replace characters for LR Items
-        inputText = inputText.replace(".", DOT).replace("->", ARROW);
-        return inputText;
-    }
-
     toString() {
         const plainProductions = [];
         for (const prod of this.productions) {
@@ -78,22 +71,25 @@ export default class Grammar {
         // multiple productions with the same Left Non Terminal can be delimited by |
         // if right side is "" epsilon is added
         if (row.trim() === "")
-            return
+            return;
         row = row.replaceAll('->', ARROW);
-
         const prodSplit = row.split(ARROW);
         if (prodSplit.length !== 2) {
             this._errors.push(row + ": contains too many or too less Arrows. Use -> for an arrow");
-            return
+            return;
         }
         const left = prodSplit[0].trim();
+        if (left !== left.replace(/\s/g, '')) {
+            this._errors.push(left + ": contains whitespace, which cannot be used at the RHS as a nonterminal");
+            return;
+        }
         if (left !== START_NON_TERMINAL && !this.nonTerminals.includes(left))
             this.nonTerminals.push(left);
 
         const prods = prodSplit[1].split(DELIMITER);
         for (const prod of prods) {
             const right = [];
-            const rightSplit = prod.split(" ");
+            const rightSplit = prod.split(/\s/g);
 
             for (let someTerminal of rightSplit) {
                 if (someTerminal === "" || someTerminal === EPSILON)

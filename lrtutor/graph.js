@@ -15,17 +15,17 @@ import {getGraph} from "./init.js";
  * adds a state to the graph on given position and starts editing the first LR item
  * @param graph mxGraph
  * @param locX X location of top left corner for new state
- * @param loxY Y location of top left corner for new state
+ * @param locY Y location of top left corner for new state
  * @return {mxCell} the created State
  */
-export function addState(graph, locX, loxY) {
+export function addState(graph, locX, locY) {
     let state;
     graph.getModel().beginUpdate();
     try {
         // xml node as value, to store attributes for the state
         // const node = mxUtils.createXmlDocument().createElement('State');
         const node = null
-        state = graph.insertVertex(graph.getDefaultParent(), null, node, locX, loxY, STATE_MIN_WIDTH, STATE_MIN_HEIGHT, STYLE_STATE);
+        state = graph.insertVertex(graph.getDefaultParent(), null, node, locX, locY, STATE_MIN_WIDTH, STATE_MIN_HEIGHT, STYLE_STATE);
     } finally {
         graph.getModel().endUpdate();
     }
@@ -98,7 +98,7 @@ export function addStartState(graph) {
  * @param graph mxGraph
  * @param state new start State
  */
-export function setStartStateIntern(graph, state) {
+function setStartStateIntern(graph, state) {
     if (state == null)
         return;
     const geo = state.getGeometry();
