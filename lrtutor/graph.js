@@ -129,6 +129,7 @@ export function redrawStartIndicator(graph) {
  */
 export function toggleFinalStates() {
     const graph = getGraph();
+    if (graph.isEditing()) return;
     const selection = graph.getSelectionCells()
     for (const cell of selection) {
         if (cell.getType() === STYLE_STATE) {
@@ -148,6 +149,7 @@ export function toggleFinalStates() {
  */
 export function deleteStates() {
     const graph = getGraph();
+    if (graph.isEditing()) return;
     const selection = graph.getSelectionCells()
     const startIndicator = graph.startIndicatorSource.edges[0];
     graph.getModel().beginUpdate();
