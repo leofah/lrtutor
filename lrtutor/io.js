@@ -1,6 +1,8 @@
+// TODO error message on loading
+
 import {changeGrammarDOM, getGraph, initGraph} from "./init.js";
 import Grammar from "./grammar.js";
-import {showIDs} from "./graph.js";
+import {confirmDeleteGraph, setGraphSaved, showIDs} from "./graph.js";
 import {hideErrors} from "./checkGraph.js";
 import {GRAPH_VERSION} from "./constants.js";
 
@@ -40,6 +42,11 @@ function serializeGraph(graph) {
     //save start state
     graphNode.setAttribute('startState', graph.startState.id)
     graphNode.setAttribute('startSource', graph.startIndicatorSource.id)
+
+    //if the graph was serialized it is considered saved.
+    //it is not able to detect, if the user really saved the file.
+    setGraphSaved(graph, true);
+
     return mxUtils.getPrettyXml(rootXml);
 }
 
@@ -91,10 +98,10 @@ function deSerializeGraph(serial) {
 
         //show state IDs
         showIDs(graph);
-
         hideErrors();
+        setGraphSaved(graph, true);
     } catch (e) {
-        return "Invalid File Format: " + e;
+        return "Error while parsing: "+ e;
     }
 }
 
@@ -125,11 +132,13 @@ export function saveGraph() {
  * Loads the graph from a file. A File Window is opened to select the graph file
  */
 export function loadGraph() {
+    const graph = getGraph();
+    if (!confirmDeleteGraph(graph)) return;
     loadFile(serial => {
         // remove grammar input
         const error = deSerializeGraph(serial);
         if (error)
-            console.log(error);
+            alert("Failed to load the automaton:" + error);
     });
 }
 
@@ -159,9 +168,6 @@ function saveFile(filename, data, type) {
  * @param func function to process the file text.
  */
 function loadFile(func) {
-    /**
-     * asks user to input a file. The content of the file is passed to the argument func(content)
-     */
     const elem = window.document.createElement('input');
     elem.type = 'file';
     elem.addEventListener('change', (e) => {

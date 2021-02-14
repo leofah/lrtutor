@@ -1,11 +1,11 @@
-//TODO confirm dialog if unsaved graph would be removed. Load, Clear, Reload side/ leave side
-
 import {
     addStartState,
     addState,
     deleteStates,
+    getGraphSaved,
     moveStateId,
     redrawStartIndicator,
+    setGraphSaved,
     showIDs,
     toggleFinalStates
 } from "./graph.js";
@@ -53,7 +53,8 @@ mxCell.prototype.isFinal = function () {
 }
 
 if (!mxClient.isBrowserSupported()) {
-    mxUtils.error('Unsupported Browser', 200, false);
+    alert("Unsupported Browser");
+    document.getElementsByTagName("body")[0].innerHTML = "<h1> Browser is not supported</h1>";
 }
 
 let graph = undefined;
@@ -64,29 +65,25 @@ export function getGraph() {
 
 export function initGraph(grammar) {
     //setup the mxGraph and its variables
-    const g = new mxGraph(I('mxCanvas'), new mxGraphModel());
-    g.setAllowDanglingEdges(false);
-    g.setDisconnectOnMove(false);
-    g.setEdgeLabelsMovable(false);
-    g.setAutoSizeCells(true);
-    g.setCellsResizable(false);
-    g.setCellsCloneable(false);
-    g.setAllowNegativeCoordinates(false);
-    g.setCellsDisconnectable(false); //don't allow edges to be move to different states
-    g.foldingEnabled = false; //dont' show the folding action/icon in nested cells (states)
+    graph = new mxGraph(I('mxCanvas'), new mxGraphModel());
+    graph.setAllowDanglingEdges(false);
+    graph.setDisconnectOnMove(false);
+    graph.setEdgeLabelsMovable(false);
+    graph.setAutoSizeCells(true);
+    graph.setCellsResizable(false);
+    graph.setCellsCloneable(false);
+    graph.setAllowNegativeCoordinates(false);
+    graph.setCellsDisconnectable(false); //don't allow edges to be move to different states
+    graph.foldingEnabled = false; //dont' show the folding action/icon in nested cells (states)
 
     //own Setup
-    g.grammar = grammar;
-    g.ownConnectionHandler = new connectionHandler(g)
-    g.editHandler = new editHandler(g);
+    graph.grammar = grammar;
+    graph.ownConnectionHandler = new connectionHandler(graph)
+    graph.editHandler = new editHandler(graph);
 
-    setStylesheet(g);
-    addListeners(g);
-    addStartState(g);
-
-    graph = g;
-
-    return g;
+    setStylesheet(graph);
+    addListeners(graph);
+    addStartState(graph);
 }
 
 function setStylesheet(graph) {
@@ -147,7 +144,7 @@ function addListeners(graph) {
     // example listener
     graph.addListener(null, (_, evt) => {
         //print every event
-        // if (evt.name !== "fireMouseEvent")
+        // if (evt.name !== mxEvent.FIRE_MOUSE_EVENT)
         //     console.log(evt);
     });
 
@@ -247,6 +244,17 @@ function addListeners(graph) {
                 // setStartState();
                 break;
         }
+    });
+
+    //prevent close without saving
+    window.addEventListener('beforeunload', function (e) {
+        if (getGraphSaved(getGraph())) return;
+        e.preventDefault();
+        e.returnValue = '';
+    });
+    graph.addListener(null, (_, evt) => {
+        if (evt.name === mxEvent.CLICK || evt.name === mxEvent.FIRE_MOUSE_EVENT) return;
+        setGraphSaved(getGraph(), false);
     });
 }
 

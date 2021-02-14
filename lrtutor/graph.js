@@ -250,3 +250,36 @@ export function resetCanvas() {
 
     }
 }
+
+/**
+ * returns the is saved status of the graph
+ * @param graph {mxGraph}
+ * @return {boolean}
+ */
+export function getGraphSaved(graph) {
+    if (graph?.saved === undefined)
+        return false;
+    return graph.saved;
+}
+
+/**
+ * Sets the is saved status of the graph.
+ * @param graph {mxGraph}
+ * @param value {boolean}
+ */
+export function setGraphSaved(graph, value) {
+    if (graph === undefined) return;
+    graph.saved = value;
+}
+
+/**
+ * If the graph was updated since the latest save, the user is asked to confirm a deletion of the unsaved graph.
+ * returns true if it is not a problem to delete the graph
+ * @return {boolean} indicating if the graph can be deleted
+ */
+export function confirmDeleteGraph(graph) {
+    if (graph === undefined) return true;
+    if(getGraphSaved(graph)) return true;
+    return window.confirm("This action will delete the unsaved automaton. Do you want to proceed?");
+
+}
