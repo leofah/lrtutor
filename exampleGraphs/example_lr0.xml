@@ -1,0 +1,116 @@
+<LRTutor version="1.0">
+  <Graph startState="2" startSource="5">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" style="state" parent="1" vertex="1">
+          <mxGeometry x="50" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="S&#39;➜•aAc" style="lritem" parent="2" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="1" vertex="1">
+          <mxGeometry x="20" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="6" style="edge" parent="1" source="5" target="2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7" style="state" parent="1" vertex="1">
+          <mxGeometry x="200" y="30" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="S&#39;➜a•Ac" style="lritem" parent="7" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="A➜•bbA" style="lritem" parent="7" vertex="1">
+          <mxGeometry x="10" y="30" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="A➜•b" style="lritem" parent="7" vertex="1">
+          <mxGeometry x="10" y="50" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="a" style="edge" parent="1" source="2" target="7" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="15" style="state" parent="1" vertex="1">
+          <mxGeometry x="390" y="51" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="S&#39;➜aA•c" style="lritem" parent="15" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="A" style="edge" parent="1" source="7" target="15" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" style="final" parent="1" vertex="1">
+          <mxGeometry x="560" y="50" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="S&#39;➜aAc•" style="lritem" parent="23" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="c" style="edge" parent="1" source="15" target="23" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="45" style="final" parent="1" vertex="1">
+          <mxGeometry x="200" y="160" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="51" value="A➜b•bA" style="lritem" parent="45" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="53" value="A➜b•" style="lritem" parent="45" vertex="1">
+          <mxGeometry x="10" y="30" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="52" value="b" style="edge" parent="1" source="7" target="45" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="55" style="state" parent="1" vertex="1">
+          <mxGeometry x="397" y="150" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="62" value="A➜bb•A" style="lritem" parent="55" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="64" value="A➜•bbA" style="lritem" parent="55" vertex="1">
+          <mxGeometry x="10" y="30" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="65" value="A➜•b" style="lritem" parent="55" vertex="1">
+          <mxGeometry x="10" y="50" width="30" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="63" value="b" style="edge" parent="1" source="45" target="55" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="67" value="b" style="edge" parent="1" source="55" target="45" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="68" style="final" parent="1" vertex="1">
+          <mxGeometry x="557" y="170" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="76" value="A➜bbA•" style="lritem" parent="68" vertex="1">
+          <mxGeometry x="10" y="10" width="50" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="77" value="A" style="edge" parent="1" source="55" target="68" edge="1">
+          <mxGeometry y="10" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="78" value="0" style="showid" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="79" value="1" style="showid" vertex="1" parent="1">
+          <mxGeometry x="190" y="20" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="80" value="2" style="showid" vertex="1" parent="1">
+          <mxGeometry x="380" y="41" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="81" value="3" style="showid" vertex="1" parent="1">
+          <mxGeometry x="550" y="40" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="82" value="4" style="showid" vertex="1" parent="1">
+          <mxGeometry x="190" y="150" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="83" value="5" style="showid" vertex="1" parent="1">
+          <mxGeometry x="387" y="140" width="20" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="84" value="6" style="showid" vertex="1" parent="1">
+          <mxGeometry x="547" y="160" width="20" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </Graph>
+  <Grammar lr="0" plain="S&#39;➜a A c&#xa;A➜b b A&#xa;A➜b" />
+</LRTutor>

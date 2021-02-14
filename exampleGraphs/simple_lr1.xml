@@ -1,4 +1,4 @@
-<LRTutor version="0.4">
+<LRTutor version="1.0">
   <Graph startState="2" startSource="4">
     <mxGraphModel>
       <root>
@@ -124,31 +124,31 @@
         <mxCell id="122" value="a" style="edge" parent="1" source="101" target="101" edge="1">
           <mxGeometry y="10" relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="123" value="0" style="showid" vertex="1" parent="1">
+        <mxCell id="131" value="0" style="showid" vertex="1" parent="1">
           <mxGeometry x="40" y="40" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="124" value="1" style="showid" vertex="1" parent="1">
+        <mxCell id="132" value="1" style="showid" vertex="1" parent="1">
           <mxGeometry x="350" y="40" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="125" value="2" style="showid" vertex="1" parent="1">
+        <mxCell id="133" value="2" style="showid" vertex="1" parent="1">
           <mxGeometry x="190" y="130" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="126" value="3" style="showid" vertex="1" parent="1">
+        <mxCell id="134" value="3" style="showid" vertex="1" parent="1">
           <mxGeometry x="40" y="180" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="127" value="4" style="showid" vertex="1" parent="1">
+        <mxCell id="135" value="4" style="showid" vertex="1" parent="1">
           <mxGeometry x="40" y="310" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="128" value="5" style="showid" vertex="1" parent="1">
+        <mxCell id="136" value="5" style="showid" vertex="1" parent="1">
           <mxGeometry x="660" y="60" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="129" value="6" style="showid" vertex="1" parent="1">
+        <mxCell id="137" value="6" style="showid" vertex="1" parent="1">
           <mxGeometry x="500" y="120" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="130" value="7" style="showid" vertex="1" parent="1">
+        <mxCell id="138" value="7" style="showid" vertex="1" parent="1">
           <mxGeometry x="350" y="170" width="20" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="131" value="8" style="showid" vertex="1" parent="1">
+        <mxCell id="139" value="8" style="showid" vertex="1" parent="1">
           <mxGeometry x="350" y="300" width="20" height="20" as="geometry" />
         </mxCell>
       </root>

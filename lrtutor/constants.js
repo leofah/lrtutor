@@ -1,4 +1,4 @@
-export const GRAPH_VERSION = '0.4';
+export const GRAPH_VERSION = '1.0';
 
 //Style and type names for the different elements on the canvas
 export const STYLE_STATE = 'state';

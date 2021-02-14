@@ -1,5 +1,3 @@
-// TODO error message on loading
-
 import {changeGrammarDOM, getGraph, initGraph} from "./init.js";
 import Grammar from "./grammar.js";
 import {confirmDeleteGraph, setGraphSaved, showIDs} from "./graph.js";
