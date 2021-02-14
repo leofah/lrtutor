@@ -63,6 +63,9 @@ function serializeGraph(graph) {
 function deSerializeGraph(serial) {
     try {
         const doc = mxUtils.parseXml(serial);
+        if (doc.getElementsByTagName("parsererror")[0]) {
+            return "No XML File";
+        }
         const graphNode = doc.getElementsByTagName('Graph')[0];
         const vers = doc.documentElement.getAttribute('version');
         if (vers !== GRAPH_VERSION) {
@@ -91,6 +94,9 @@ function deSerializeGraph(serial) {
         graph.startState = graph.getModel().cells[startID];
         const startSourceID = graphNode.getAttribute('startSource');
         graph.startIndicatorSource = graph.getModel().cells[startSourceID];
+        if (graph.startState === undefined || graph.startIndicatorSource === undefined) {
+            return "Invalid startState or startSource. Your automaton is now in an inconsistent state";
+        }
 
         //reset the connection Handler
         graph.ownConnectionHandler.abort();
@@ -101,7 +107,7 @@ function deSerializeGraph(serial) {
         hideErrors();
         setGraphSaved(graph, true);
     } catch (e) {
-        return "Error while parsing: "+ e;
+        return "Error while parsing: " + e;
     }
 }
 
@@ -138,7 +144,7 @@ export function loadGraph() {
         // remove grammar input
         const error = deSerializeGraph(serial);
         if (error)
-            alert("Failed to load the automaton:" + error);
+            alert("Failed to load the automaton: " + error);
     });
 }
 
