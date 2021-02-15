@@ -12,7 +12,7 @@ You can either clone the repository are select a released version.
 In the released version lrtutor minified and already referenced in ```index.html```.
 If you cloned the repo you can either minify lrtutor yourself or serve the 10 javascript files as is.
 Tools like [babel](https://babeljs.io/) or [esbuild](https://esbuild.github.io/) can be used to minify the code.
-For the release ```esbuild --bundle --minify lrtutor/lrtutor.js --outfile=lrtutor.min.js``` is used.
+For the release ```esbuild --bundle --minify lrtutor/lrtutor.js --outfile=lrtutor/lrtutor.min.js``` is used.
 Keep in mind, the not compiled javascript contains modules and is therefore only loaded by browsers, if the file is 
 served.
 A local not served version will not work with javascript modules.
