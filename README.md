@@ -1,9 +1,8 @@
 # LR Tutor
 
-[LR Tutor](https://www2.in.tum.de/lr-tutor) is a webtool for students, where they can create and check a canonical LR
+[LR Tutor](https://www2.in.tum.de/lrtutor) is a webtool for students, where they can create and check a canonical LR
 automaton for a grammar.
-It is my bachelor thesis project.
-Currently, the development version is hosted [here](https://home.in.tum.de/~fahrbach).
+It was my bachelor thesis project.
 
 # Installation
 
